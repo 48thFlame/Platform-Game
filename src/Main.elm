@@ -11,10 +11,22 @@ import Svg
 import Svg.Attributes as SvgA
 
 
-type alias Model =
-    { gs : GameState
-    , keys : KeysPressed
-    }
+
+-- MAIN
+
+
+main : Program () Model Msg
+main =
+    Browser.element
+        { init = initialModel
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
+
+
+
+-- INIT
 
 
 initialModel : () -> ( Model, Cmd Msg )
@@ -24,6 +36,33 @@ initialModel _ =
       }
     , Cmd.none
     )
+
+
+
+-- MODEL
+
+
+type alias Model =
+    { gs : GameState
+    , keys : KeysPressed
+    }
+
+
+
+-- VIEW
+
+
+view : Model -> Html.Html Msg
+view model =
+    Html.div
+        [ HtmlA.class "canvasContainer" ]
+        [ Svg.svg
+            [ SvgA.viewBox ("0 0 " ++ canvasS.sw ++ " " ++ canvasS.sh)
+            , SvgA.class "canvas"
+            ]
+            [ viewGameState model.gs
+            ]
+        ]
 
 
 
@@ -62,23 +101,6 @@ update msg model =
 
 
 
--- VIEW
-
-
-view : Model -> Html.Html Msg
-view model =
-    Html.div
-        [ HtmlA.class "canvasContainer" ]
-        [ Svg.svg
-            [ SvgA.viewBox ("0 0 " ++ canvasS.sw ++ " " ++ canvasS.sh)
-            , SvgA.class "canvas"
-            ]
-            [ viewGameState model.gs
-            ]
-        ]
-
-
-
 -- SUBSCRIPTIONS
 
 
@@ -90,17 +112,3 @@ subscriptions _ =
         , Events.onKeyUp (keyDecoder KeyUp)
         , Events.onVisibilityChange Blur
         ]
-
-
-
--- MAIN
-
-
-main : Program () Model Msg
-main =
-    Browser.element
-        { init = initialModel
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
