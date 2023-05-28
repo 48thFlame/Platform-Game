@@ -1,0 +1,15 @@
+body {
+    background-color: #b0c4de;
+}
+
+.canvasContainer {
+    text-align: center;
+    margin: auto;
+    margin-top: 5vh;
+    height: 80vh;
+    aspect-ratio: 780/640;
+}
+
+.canvas {
+    background: #efefef;
+}
