@@ -13,6 +13,12 @@ import Svg
 newGameState : GameState
 newGameState =
     { player = newPlayer
+    , platform =
+        { dim = newDimension 128 64
+        , img = "assets/platform.png"
+        , pos = newPosition 300 600
+        , rot = initialRotation
+        }
     }
 
 
@@ -22,6 +28,7 @@ newGameState =
 
 type alias GameState =
     { player : Player
+    , platform : EntityBase
     }
 
 
@@ -31,7 +38,7 @@ type alias GameState =
 
 viewGameState : GameState -> Svg.Svg msg
 viewGameState gs =
-    viewEntity gs.player.eb
+    Svg.g [] [ viewEntity gs.player.eb, viewEntity gs.platform ]
 
 
 
@@ -45,15 +52,15 @@ type GameMsg
     | LeftButton
 
 
-updateGameStateModelCall : Float -> KeysPressed -> GameState -> GameState
-updateGameStateModelCall delta keys gs =
-    List.foldl (updateGameState delta) gs (getGameMsgs keys)
+updateGameStateModelCall : Float -> KeysPressed -> ( Maybe Position, Position ) -> GameState -> GameState
+updateGameStateModelCall delta keys mouse gs =
+    List.foldl (updateGameState delta) gs (getGameMsgs keys mouse)
 
 
-getGameMsgs : KeysPressed -> List GameMsg
-getGameMsgs keys =
+getGameMsgs : KeysPressed -> ( Maybe Position, Position ) -> List GameMsg
+getGameMsgs keys mouse =
     [ Just AnimationFrame
-    , if isPressed " " keys then
+    , if isPressed "ArrowUp" keys then
         Just JumpButton
 
       else
@@ -69,6 +76,23 @@ getGameMsgs keys =
       else
         Nothing
     ]
+        ++ (case mouse of
+                ( Nothing, _ ) ->
+                    [ Nothing ]
+
+                ( Just pos, middlePos ) ->
+                    [ if pos.x > middlePos.x then
+                        Just RightButton
+
+                      else
+                        Just LeftButton
+                    , if pos.y < middlePos.y then
+                        Just JumpButton
+
+                      else
+                        Nothing
+                    ]
+           )
         -- convert maybe to just value by dropping `Nothing`
         |> List.filterMap identity
 
@@ -77,10 +101,10 @@ updateGameState : Float -> GameMsg -> GameState -> GameState
 updateGameState delta msg gs =
     case msg of
         AnimationFrame ->
-            { gs | player = playerAnimationFrame delta gs.player }
+            { gs | player = playerAnimationFrame delta gs.platform gs.player }
 
         JumpButton ->
-            { gs | player = playerSpaceBar gs.player }
+            { gs | player = playerSpaceBar [ gs.platform ] gs.player }
 
         RightButton ->
             { gs | player = playerRight gs.player }

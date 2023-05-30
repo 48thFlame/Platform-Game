@@ -95,7 +95,7 @@ type EntityAction
     | MoveLeftRight Float
     | Rotate Float
     | MoveForward Float
-    | ApplyVelocity Velocity
+    -- | ApplyVelocity Velocity
 
 
 newPosition : Float -> Float -> Position
@@ -178,7 +178,7 @@ actAction delta action ent =
             in
             { ent | pos = newPos }
 
-        ApplyVelocity vel ->
+        -- ApplyVelocity vel ->
             -- applyVelocity :
             --     Float
             --     -> { a | eb : EntityBase, vel : Velocity }
@@ -189,7 +189,7 @@ actAction delta action ent =
             --             actAction delta (MoveUpDown ent.vel.dy) ent.eb
             --                 |> actAction delta (MoveLeftRight ent.vel.dx)
             --     }
-            ent |> actAction delta (MoveUpDown vel.dy) |> actAction delta (MoveLeftRight vel.dx)
+            -- ent |> actAction delta (MoveUpDown vel.dy) |> actAction delta (MoveLeftRight vel.dx)
 
 
 getXY : Float -> Float -> ( Float, Float )

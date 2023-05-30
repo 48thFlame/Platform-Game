@@ -7,6 +7,7 @@ import Engine exposing (..)
 import Game exposing (..)
 import Html
 import Html.Attributes as HtmlA
+import Json.Decode as Decode
 import Svg
 import Svg.Attributes as SvgA
 
@@ -15,7 +16,7 @@ import Svg.Attributes as SvgA
 -- MAIN
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.element
         { init = initialModel
@@ -29,13 +30,23 @@ main =
 -- INIT
 
 
-initialModel : () -> ( Model, Cmd Msg )
-initialModel _ =
+type alias Flags =
+    { w : Float
+    , h : Float
+    }
+
+
+initialModel : Flags -> ( Model, Cmd Msg )
+initialModel d =
     ( { gs = newGameState
       , keys = initialKeysPressed
+      , middlePos = { x = (d.w / 2) * 0.8, y = d.h / 2 }
+      , mousePressed = False
+      , mousePos = newPosition 0 0
       }
     , Cmd.none
     )
+        |> Debug.log "init"
 
 
 
@@ -45,6 +56,11 @@ initialModel _ =
 type alias Model =
     { gs : GameState
     , keys : KeysPressed
+
+    -- , pageDim : Dimension
+    , middlePos : Position
+    , mousePressed : Bool
+    , mousePos : Position
     }
 
 
@@ -73,6 +89,9 @@ type Msg
     = OnAnimationFrame Float
     | KeyDown String
     | KeyUp String
+    | MouseDown
+    | MouseMove Float Float
+    | MouseUp
     | Blur Events.Visibility
 
 
@@ -84,8 +103,15 @@ update msg model =
             let
                 delta =
                     deltaTime / 1000
+
+                mouse =
+                    if model.mousePressed then
+                        ( Just model.mousePos, model.middlePos )
+
+                    else
+                        ( Nothing, model.middlePos )
             in
-            ( { model | gs = updateGameStateModelCall delta model.keys model.gs }, Cmd.none )
+            ( { model | gs = updateGameStateModelCall delta model.keys mouse model.gs }, Cmd.none )
 
         KeyDown key ->
             -- add key to model.keys
@@ -94,6 +120,19 @@ update msg model =
         KeyUp key ->
             -- remove key from model.keys
             ( applyFuncToModelKeys model (removeKey key), Cmd.none )
+
+        MouseDown ->
+            ( { model | mousePressed = True }, Cmd.none )
+
+        MouseUp ->
+            ( { model | mousePressed = False }, Cmd.none )
+
+        MouseMove x y ->
+            let
+                _ =
+                    Debug.log "mouse" ( x, y )
+            in
+            ( { model | mousePos = newPosition x y }, Cmd.none )
 
         Blur _ ->
             -- clear model.keys
@@ -105,10 +144,21 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions model =
     Sub.batch
         [ Events.onAnimationFrameDelta OnAnimationFrame
         , Events.onKeyDown (keyDecoder KeyDown)
         , Events.onKeyUp (keyDecoder KeyUp)
         , Events.onVisibilityChange Blur
+        , Events.onMouseDown (Decode.succeed MouseDown)
+        , Events.onMouseUp (Decode.succeed MouseUp)
+        , if model.mousePressed then
+            Events.onMouseMove
+                (Decode.map2 MouseMove
+                    (Decode.field "offsetX" Decode.float)
+                    (Decode.field "offsetY" Decode.float)
+                )
+
+          else
+            Sub.none
         ]

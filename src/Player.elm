@@ -28,20 +28,22 @@ type alias Player =
 
 {-| Respond to `SpaceBar` `GameMsg`
 -}
-playerSpaceBar : Player -> Player
-playerSpaceBar plr =
-    if playerCanJump plr then
+playerSpaceBar : List EntityBase -> Player -> Player
+playerSpaceBar clrs plr =
+    let
+        -- {-| checks whether plr can jump - touching ground or something
+        -- -}
+        playerCanJump : Bool
+        playerCanJump =
+            List.any (isCollided (actAction 1 (MoveUpDown 4) plr.eb)) clrs
+
+        --  |> yTooBig canvasS.h
+    in
+    if playerCanJump then
         playerActJump plr
 
     else
         plr
-
-
-{-| checks whether plr can jump - touching ground or something
--}
-playerCanJump : Player -> Bool
-playerCanJump plr =
-    actAction 1 (MoveUpDown 1) plr.eb |> yTooBig canvasS.h
 
 
 {-| Make player jump without checking if able
@@ -88,44 +90,40 @@ playerLeft plr =
 
 {-| `actAction` and make sure good - not out of bounds
 -}
-playerActActionSafely : Float -> EntityAction -> Player -> Player
-playerActActionSafely delta action plr =
+playerActActionSafely :
+    Float
+    -> Float
+    -> (Float -> EntityAction)
+    -> List EntityBase
+    -> Player
+    -> Player
+playerActActionSafely delta actionValue actionType colliders plr =
     let
         eb =
             plr.eb
 
         tempEb =
-            actAction delta action eb
+            actAction delta (actionType actionValue) eb
 
-        newEbYSafe =
-            let
-                tPos =
-                    tempEb.pos
-            in
-            if yTooBig canvasS.h tempEb then
-                { tempEb | pos = { tPos | y = canvasS.h - tempEb.dim.height } }
+        newPlr =
+            if List.any (isCollided tempEb) colliders then
+                case actionType actionValue of
+                    MoveUpDown _ ->
+                        -- if moving up down fix dumb issue where freezes in the air
+                        let
+                            vel =
+                                plr.vel
+                        in
+                        { plr | vel = { vel | dy = 0 } }
 
-            else if yTooSmall tempEb then
-                { tempEb | pos = { tPos | y = 0 } }
-
-            else
-                tempEb
-
-        newEbXYSafe =
-            let
-                tPos =
-                    newEbYSafe.pos
-            in
-            if xTooBig canvasS.w newEbYSafe then
-                { newEbYSafe | pos = { tPos | x = canvasS.w - newEbYSafe.dim.width } }
-
-            else if xTooSmall newEbYSafe then
-                { newEbYSafe | pos = { tPos | x = 0 } }
+                    _ ->
+                        plr
 
             else
-                newEbYSafe
+                -- safe!
+                { plr | eb = tempEb }
     in
-    { plr | eb = newEbXYSafe }
+    newPlr
 
 
 {-| Update Player vel - gravity and friction
@@ -139,7 +137,16 @@ playerUpdateVel delta plr =
         newVel =
             let
                 newDy =
-                    vel.dy + plrS.gravityStrength * delta
+                    let
+                        value =
+                            vel.dy + plrS.gravityStrength * delta
+                    in
+                    if value >= plrS.maxDy then
+                        plrS.maxDy
+                        -- - plrS.gravityStrength * delta
+
+                    else
+                        value
 
                 newDx =
                     let
@@ -163,12 +170,7 @@ playerUpdateVel delta plr =
                         0
             in
             { vel
-                | dy =
-                    if newDy >= plrS.maxDy then
-                        plrS.maxDy
-
-                    else
-                        newDy
+                | dy = newDy
                 , dx =
                     newDx
             }
@@ -178,6 +180,15 @@ playerUpdateVel delta plr =
 
 {-| Game update message happened - apply pending changes
 -}
-playerAnimationFrame : Float -> Player -> Player
-playerAnimationFrame delta plr =
-    playerActActionSafely delta (ApplyVelocity plr.vel) plr |> playerUpdateVel delta
+playerAnimationFrame : Float -> EntityBase -> Player -> Player
+playerAnimationFrame delta plat plr =
+    playerActActionSafely delta
+        plr.vel.dy
+        MoveUpDown
+        [ plat ]
+        plr
+        |> playerActActionSafely delta
+            plr.vel.dx
+            MoveLeftRight
+            [ plat ]
+        |> playerUpdateVel delta

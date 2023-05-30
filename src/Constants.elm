@@ -6,4 +6,9 @@ canvasS =
 
 
 plrS =
-    { gravityStrength = 750, jumpStrength = 500, maxDy = 480, frictionStrength = 1500, leftRightStrength = 200 }
+    { gravityStrength = 750
+    , jumpStrength = 500
+    , maxDy = 480
+    , frictionStrength = 1500
+    , leftRightStrength = 200
+    }
