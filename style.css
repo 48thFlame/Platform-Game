@@ -5,9 +5,12 @@ body {
 .canvasContainer {
     text-align: center;
     margin: auto;
-    margin-top: 5vh;
-    height: 80vh;
-    aspect-ratio: 780/640;
+    margin-top: 3vh;
+    height: 90vh;
+    aspect-ratio: 120/280;
+    /* width: 90vw; */
+    /* aspect-ratio: 780/640; */
+    /* aspect-ratio: 200/600; */
 }
 
 .canvas {

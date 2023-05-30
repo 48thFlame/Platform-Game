@@ -2,7 +2,8 @@ module Constants exposing (..)
 
 
 canvasS =
-    { w = 780, sw = "780", h = 640, sh = "640" }
+    -- { w = 780, sw = "780", h = 640, sh = "640" }
+    { w = 120, sw = "120", h = 280, sh = "280" }
 
 
 plrS =

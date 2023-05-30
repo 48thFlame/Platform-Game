@@ -12,7 +12,7 @@ newPlayer : Player
 newPlayer =
     { eb =
         { pos = newPosition (canvasS.w / 2 - 28) (canvasS.h / 2 - 32)
-        , dim = newDimension 48 64
+        , dim = newDimension 9 12
         , rot = initialRotation
         , img = "assets/player.png"
         }

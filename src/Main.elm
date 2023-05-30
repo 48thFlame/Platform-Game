@@ -31,8 +31,8 @@ main =
 
 
 type alias Flags =
-    { w : Float
-    , h : Float
+    { x : Float
+    , y : Float
     }
 
 
@@ -40,7 +40,7 @@ initialModel : Flags -> ( Model, Cmd Msg )
 initialModel d =
     ( { gs = newGameState
       , keys = initialKeysPressed
-      , middlePos = { x = (d.w / 2) * 0.8, y = d.h / 2 }
+      , middlePos = { x = d.x, y = d.y }
       , mousePressed = False
       , mousePos = newPosition 0 0
       }
@@ -89,7 +89,7 @@ type Msg
     = OnAnimationFrame Float
     | KeyDown String
     | KeyUp String
-    | MouseDown
+    | MouseDown Float Float
     | MouseMove Float Float
     | MouseUp
     | Blur Events.Visibility
@@ -121,17 +121,13 @@ update msg model =
             -- remove key from model.keys
             ( applyFuncToModelKeys model (removeKey key), Cmd.none )
 
-        MouseDown ->
-            ( { model | mousePressed = True }, Cmd.none )
+        MouseDown x y ->
+            ( { model | mousePressed = True, mousePos = newPosition x y }, Cmd.none )
 
         MouseUp ->
             ( { model | mousePressed = False }, Cmd.none )
 
         MouseMove x y ->
-            let
-                _ =
-                    Debug.log "mouse" ( x, y )
-            in
             ( { model | mousePos = newPosition x y }, Cmd.none )
 
         Blur _ ->
@@ -150,13 +146,17 @@ subscriptions model =
         , Events.onKeyDown (keyDecoder KeyDown)
         , Events.onKeyUp (keyDecoder KeyUp)
         , Events.onVisibilityChange Blur
-        , Events.onMouseDown (Decode.succeed MouseDown)
+        , Events.onMouseDown
+            (Decode.map2 MouseDown
+                (Decode.field "clientX" Decode.float)
+                (Decode.field "clientY" Decode.float)
+            )
         , Events.onMouseUp (Decode.succeed MouseUp)
         , if model.mousePressed then
             Events.onMouseMove
                 (Decode.map2 MouseMove
-                    (Decode.field "offsetX" Decode.float)
-                    (Decode.field "offsetY" Decode.float)
+                    (Decode.field "clientX" Decode.float)
+                    (Decode.field "clientY" Decode.float)
                 )
 
           else

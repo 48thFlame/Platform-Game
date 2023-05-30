@@ -16,7 +16,7 @@ newGameState =
     , platform =
         { dim = newDimension 128 64
         , img = "assets/platform.png"
-        , pos = newPosition 300 600
+        , pos = newPosition 0 200
         , rot = initialRotation
         }
     }
@@ -81,11 +81,14 @@ getGameMsgs keys mouse =
                     [ Nothing ]
 
                 ( Just pos, middlePos ) ->
-                    [ if pos.x > middlePos.x then
+                    [ if pos.x > middlePos.x + 25 then
                         Just RightButton
 
-                      else
+                      else if pos.x < middlePos.x - 25 then
                         Just LeftButton
+
+                      else
+                        Nothing
                     , if pos.y < middlePos.y then
                         Just JumpButton
 
