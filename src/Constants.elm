@@ -7,9 +7,27 @@ canvasS =
 
 
 plrS =
-    { gravityStrength = 750
-    , jumpStrength = 500
+    { gravityStrength = 650
+    , jumpStrength = 280 -- can jump up to comfortably 60 to a max of 64
     , maxDy = 480
-    , frictionStrength = 1500
-    , leftRightStrength = 200
+    , frictionStrength = 1800
+    , leftRightStrength = 120
+    , w = 9
+    , h = 12
     }
+
+
+platformS =
+    { w = 24, h = 6 }
+
+
+rightKeys =
+    [ "ArrowRight", "d", "D" ]
+
+
+leftKeys =
+    [ "ArrowLeft", "a", "A" ]
+
+
+upKeys =
+    [ "ArrowUp", " ", "w", "W" ]

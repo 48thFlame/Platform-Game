@@ -30,8 +30,8 @@ clearKeys _ =
     Set.empty
 
 
-isPressed : String -> KeysPressed -> Bool
-isPressed key s =
+isPressed : KeysPressed -> String -> Bool
+isPressed s key =
     Set.member key s
 
 
@@ -55,7 +55,8 @@ type alias EntityBase =
     { pos : Position -- Top right corner
     , dim : Dimension
     , rot : Rotation
-    , img : Image -- The image path, such as `assets/ent.png`
+
+    -- , img : Image -- The image path, such as `assets/ent.png`
     }
 
 
@@ -95,7 +96,10 @@ type EntityAction
     | MoveLeftRight Float
     | Rotate Float
     | MoveForward Float
-    -- | ApplyVelocity Velocity
+
+
+
+-- | ApplyVelocity Velocity
 
 
 newPosition : Float -> Float -> Position
@@ -178,18 +182,20 @@ actAction delta action ent =
             in
             { ent | pos = newPos }
 
-        -- ApplyVelocity vel ->
-            -- applyVelocity :
-            --     Float
-            --     -> { a | eb : EntityBase, vel : Velocity }
-            --     -> { a | eb : EntityBase, vel : Velocity }
-            -- applyVelocity delta ent =
-            --     { ent
-            --         | eb =
-            --             actAction delta (MoveUpDown ent.vel.dy) ent.eb
-            --                 |> actAction delta (MoveLeftRight ent.vel.dx)
-            --     }
-            -- ent |> actAction delta (MoveUpDown vel.dy) |> actAction delta (MoveLeftRight vel.dx)
+
+
+-- ApplyVelocity vel ->
+-- applyVelocity :
+--     Float
+--     -> { a | eb : EntityBase, vel : Velocity }
+--     -> { a | eb : EntityBase, vel : Velocity }
+-- applyVelocity delta ent =
+--     { ent
+--         | eb =
+--             actAction delta (MoveUpDown ent.vel.dy) ent.eb
+--                 |> actAction delta (MoveLeftRight ent.vel.dx)
+--     }
+-- ent |> actAction delta (MoveUpDown vel.dy) |> actAction delta (MoveLeftRight vel.dx)
 
 
 getXY : Float -> Float -> ( Float, Float )
@@ -235,8 +241,8 @@ getDistance pos1 pos2 =
     sqrt (dx * dx + dy * dy)
 
 
-viewEntity : EntityBase -> Svg.Svg msg
-viewEntity ent =
+viewEntity : String -> EntityBase -> Svg.Svg msg
+viewEntity img ent =
     let
         centeredPos =
             { x = ent.pos.x + (ent.dim.width / 2)
@@ -253,7 +259,7 @@ viewEntity ent =
                 ++ ")"
     in
     Svg.image
-        [ SvgA.xlinkHref ent.img
+        [ SvgA.xlinkHref img
         , SvgA.x (String.fromFloat ent.pos.x)
         , SvgA.y (String.fromFloat ent.pos.y)
 
@@ -344,7 +350,7 @@ keyManagerUpdate keysPressed ent =
     let
         pairToEMsg : ( String, eMsg ) -> Maybe eMsg
         pairToEMsg pair =
-            if isPressed (Tuple.first pair) keysPressed then
+            if isPressed keysPressed (Tuple.first pair) then
                 Just (Tuple.second pair)
 
             else

@@ -14,7 +14,6 @@ newPlayer =
         { pos = newPosition (canvasS.w / 2 - 28) (canvasS.h / 2 - 32)
         , dim = newDimension 9 12
         , rot = initialRotation
-        , img = "assets/player.png"
         }
     , vel = initialVelocity
     }
@@ -28,14 +27,14 @@ type alias Player =
 
 {-| Respond to `SpaceBar` `GameMsg`
 -}
-playerSpaceBar : List EntityBase -> Player -> Player
-playerSpaceBar clrs plr =
+playerUp : List EntityBase -> Player -> Player
+playerUp clrs plr =
     let
         -- {-| checks whether plr can jump - touching ground or something
         -- -}
         playerCanJump : Bool
         playerCanJump =
-            List.any (isCollided (actAction 1 (MoveUpDown 4) plr.eb)) clrs
+            List.any (isCollided (actAction 1 (MoveUpDown 2) plr.eb)) clrs
 
         --  |> yTooBig canvasS.h
     in
@@ -106,7 +105,12 @@ playerActActionSafely delta actionValue actionType colliders plr =
             actAction delta (actionType actionValue) eb
 
         newPlr =
-            if List.any (isCollided tempEb) colliders then
+            {- if new eb doesn't collide then is safe,
+               BUT if old one already collides
+                   => then stuck in block => need to allow to move,
+               ELSE not safe to not do action!
+            -}
+            if List.any (isCollided tempEb) colliders && not (List.any (isCollided eb) colliders) then
                 case actionType actionValue of
                     MoveUpDown _ ->
                         -- if moving up down fix dumb issue where freezes in the air
@@ -180,15 +184,15 @@ playerUpdateVel delta plr =
 
 {-| Game update message happened - apply pending changes
 -}
-playerAnimationFrame : Float -> EntityBase -> Player -> Player
-playerAnimationFrame delta plat plr =
+playerAnimationFrame : Float -> List EntityBase -> Player -> Player
+playerAnimationFrame delta colliders plr =
     playerActActionSafely delta
         plr.vel.dy
         MoveUpDown
-        [ plat ]
+        colliders
         plr
         |> playerActActionSafely delta
             plr.vel.dx
             MoveLeftRight
-            [ plat ]
+            colliders
         |> playerUpdateVel delta
