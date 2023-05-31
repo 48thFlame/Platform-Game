@@ -10,6 +10,7 @@ plrS =
     { gravityStrength = 650
     , jumpStrength = 280 -- can jump up to comfortably 60 to a max of 64
     , maxDy = 480
+    , jumpCheckBuffer = 4
     , frictionStrength = 1800
     , leftRightStrength = 120
     , w = 9
@@ -18,7 +19,7 @@ plrS =
 
 
 platformS =
-    { w = 24, h = 6 }
+    { w = 24, h = 6, newYA = 55, newYB = 71, speed = 25 }
 
 
 rightKeys =

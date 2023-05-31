@@ -28,17 +28,20 @@ type alias Player =
 {-| Respond to `SpaceBar` `GameMsg`
 -}
 playerUp : List EntityBase -> Player -> Player
-playerUp clrs plr =
+playerUp colliders plr =
     let
         -- {-| checks whether plr can jump - touching ground or something
         -- -}
         playerCanJump : Bool
         playerCanJump =
-            List.any (isCollided (actAction 1 (MoveUpDown 2) plr.eb)) clrs
+            List.any (isCollided (actAction 1 (MoveUpDown plrS.jumpCheckBuffer) plr.eb)) colliders
 
         --  |> yTooBig canvasS.h
     in
     if playerCanJump then
+        -- if List.any (isCollided plr.eb) clrs then
+        -- plr
+        -- else
         playerActJump plr
 
     else
@@ -108,17 +111,26 @@ playerActActionSafely delta actionValue actionType colliders plr =
             {- if new eb doesn't collide then is safe,
                BUT if old one already collides
                    => then stuck in block => need to allow to move,
-               ELSE not safe to not do action!
+               ELSE not safe to not do action!&& not (List.any (isCollided eb) colliders)
+
+               ! not sure the status of this comment
             -}
-            if List.any (isCollided tempEb) colliders && not (List.any (isCollided eb) colliders) then
+            if List.any (isCollided tempEb) colliders then
                 case actionType actionValue of
                     MoveUpDown _ ->
-                        -- if moving up down fix dumb issue where freezes in the air
                         let
                             vel =
                                 plr.vel
                         in
-                        { plr | vel = { vel | dy = 0 } }
+                        if vel.dy > 0 then
+                            --                 -- if moving up down fix dumb issue where freezes in the air
+                            { plr | vel = { vel | dy = 0 } }
+
+                        else if vel.dy < 0 then
+                            { plr | eb = tempEb }
+
+                        else
+                            plr
 
                     _ ->
                         plr
@@ -138,41 +150,41 @@ playerUpdateVel delta plr =
         vel =
             plr.vel
 
-        newVel =
+        newDy =
             let
-                newDy =
-                    let
-                        value =
-                            vel.dy + plrS.gravityStrength * delta
-                    in
-                    if value >= plrS.maxDy then
-                        plrS.maxDy
-                        -- - plrS.gravityStrength * delta
-
-                    else
-                        value
-
-                newDx =
-                    let
-                        sign =
-                            if vel.dx > 0 then
-                                1
-
-                            else
-                                -1
-
-                        value =
-                            abs vel.dx
-
-                        nDx =
-                            value - plrS.frictionStrength * delta
-                    in
-                    if nDx > 0 then
-                        nDx * sign
-
-                    else
-                        0
+                value =
+                    vel.dy + plrS.gravityStrength * delta
             in
+            -- if plr.eb.pos.y < canvasS.h then
+            if value >= plrS.maxDy then
+                plrS.maxDy
+                -- - plrS.gravityStrength * delta
+
+            else
+                value
+
+        newDx =
+            let
+                sign =
+                    if vel.dx > 0 then
+                        1
+
+                    else
+                        -1
+
+                value =
+                    abs vel.dx
+
+                nDx =
+                    value - plrS.frictionStrength * delta
+            in
+            if nDx > 0 then
+                nDx * sign
+
+            else
+                0
+
+        newVel =
             { vel
                 | dy = newDy
                 , dx =

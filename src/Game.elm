@@ -4,21 +4,40 @@ import Constants exposing (..)
 import Engine exposing (..)
 import Player exposing (..)
 import Svg
+import Svg.Attributes as SvgA
 
 
 newPlatform : Float -> Float -> Platform
 newPlatform x y =
-    { eb =
-        { dim = newDimension platformS.w platformS.h
-        , pos = newPosition x y
-        , rot = initialRotation
-        }
+    { dim = newDimension platformS.w platformS.h
+    , pos = newPosition x y
+    , rot = initialRotation
     }
 
 
 type alias Platform =
-    { eb : EntityBase
-    }
+    EntityBase
+
+
+platformsAnimationFrame : Float -> Float -> List Platform -> ( List Platform, Int )
+platformsAnimationFrame delta rand platforms =
+    let
+        firstLen =
+            List.length platforms
+
+        movedDown =
+            List.map (actAction delta (MoveUpDown platformS.speed)) platforms
+
+        filtered =
+            List.filter (\p -> p.pos.y < canvasS.h) movedDown
+
+        secondLen =
+            List.length filtered
+
+        scoreIncrease =
+            firstLen - secondLen
+    in
+    ( filtered, scoreIncrease )
 
 
 
@@ -28,12 +47,8 @@ type alias Platform =
 newGameState : GameState
 newGameState =
     { player = newPlayer
-    , platform =
-        [ newPlatform 0 230
-        , newPlatform (canvasS.w - platformS.w) 185
-        , newPlatform 0 140
-        , newPlatform (canvasS.w - platformS.w) 95
-        ]
+    , platforms = []
+    , score = 0
     }
 
 
@@ -43,7 +58,8 @@ newGameState =
 
 type alias GameState =
     { player : Player
-    , platform : List Platform
+    , platforms : List Platform
+    , score : Int
     }
 
 
@@ -53,15 +69,12 @@ type alias GameState =
 
 viewGameState : GameState -> Svg.Svg msg
 viewGameState gs =
-    let
-        viewPlatform p =
-            viewEntity "assets/platform.png" p.eb
-    in
     Svg.g
         []
-        ([ viewEntity "assets/player.png" gs.player.eb ]
-            ++ List.map viewPlatform gs.platform
-        )
+        [ Svg.text_ [ SvgA.x "7", SvgA.y "20" ] [ Svg.text (String.fromInt gs.score) ]
+        , viewEntity "assets/player.png" gs.player.eb
+        , Svg.g [] (List.map (viewEntity "assets/platform.png") gs.platforms)
+        ]
 
 
 
@@ -73,15 +86,16 @@ type GameMsg
     | JumpButton
     | RightButton
     | LeftButton
+    | NewPlatform
 
 
-updateGameStateModelCall : Float -> KeysPressed -> ( Maybe Position, Position ) -> GameState -> GameState
-updateGameStateModelCall delta keys mouse gs =
-    List.foldl (updateGameState delta) gs (getGameMsgs keys mouse)
+updateGameStateModelCall : Float -> Float -> KeysPressed -> ( Maybe Position, Position ) -> GameState -> GameState
+updateGameStateModelCall delta rand keys mouse gs =
+    List.foldl (updateGameState delta (lcgRandom (lcgRandom (lcgRandom rand)))) gs (getGameMsgs keys mouse (lcgRandom rand) gs)
 
 
-getGameMsgs : KeysPressed -> ( Maybe Position, Position ) -> List GameMsg
-getGameMsgs keys mouse =
+getGameMsgs : KeysPressed -> ( Maybe Position, Position ) -> Float -> GameState -> List GameMsg
+getGameMsgs keys mouse rand gs =
     let
         keyCheckFunc kl =
             List.any (isPressed keys) kl
@@ -102,6 +116,21 @@ getGameMsgs keys mouse =
 
       else
         Nothing
+    , case List.head gs.platforms of
+        Nothing ->
+            Just NewPlatform
+
+        Just p ->
+            let
+                -- prefers lower numbers because keeps trying until works
+                yToNew =
+                    getRandomInRange rand platformS.newYA platformS.newYB
+            in
+            if p.pos.y > yToNew then
+                Just NewPlatform
+
+            else
+                Nothing
     ]
         ++ (case mouse of
                 ( Nothing, _ ) ->
@@ -129,22 +158,55 @@ getGameMsgs keys mouse =
 
 borderColliders : List EntityBase
 borderColliders =
-    [ { pos = newPosition -1 0, dim = newDimension 1 canvasS.h, rot = initialRotation }
-    , { pos = newPosition -1 0, dim = newDimension canvasS.w 1, rot = initialRotation }
-    , { pos = newPosition canvasS.w 0, dim = newDimension 1 canvasS.h, rot = initialRotation }
-    , { pos = newPosition 0 canvasS.h, dim = newDimension canvasS.w 1, rot = initialRotation }
+    [ { pos = newPosition -101 0
+      , dim = newDimension 100 canvasS.h
+      , rot = initialRotation
+      }
+
+    -- , { pos = newPosition -101 0
+    --   , dim = newDimension canvasS.w 100
+    --   , rot = initialRotation
+    --   }
+    , { pos = newPosition canvasS.w 0
+      , dim = newDimension 100 canvasS.h
+      , rot = initialRotation
+      }
+    , { pos = newPosition 0 canvasS.h
+      , dim = newDimension canvasS.w 100
+      , rot = initialRotation
+      }
     ]
 
 
-updateGameState : Float -> GameMsg -> GameState -> GameState
-updateGameState delta msg gs =
+updateGameState : Float -> Float -> GameMsg -> GameState -> GameState
+updateGameState delta rand msg gs =
     let
         colliders =
-            List.map .eb gs.platform ++ borderColliders
+            gs.platforms ++ borderColliders
+
+        a =
+            lcgRandom rand
+
+        b =
+            lcgRandom a
     in
     case msg of
         AnimationFrame ->
-            { gs | player = playerAnimationFrame delta colliders gs.player }
+            let
+                platformUpdate =
+                    platformsAnimationFrame delta a gs.platforms
+
+                newPlatforms =
+                    Tuple.first platformUpdate
+
+                scoreIncrease =
+                    Tuple.second platformUpdate
+            in
+            { gs
+                | player = playerAnimationFrame delta colliders gs.player
+                , platforms = newPlatforms
+                , score = gs.score + scoreIncrease
+            }
 
         JumpButton ->
             { gs | player = playerUp colliders gs.player }
@@ -154,3 +216,12 @@ updateGameState delta msg gs =
 
         LeftButton ->
             { gs | player = playerLeft gs.player }
+
+        NewPlatform ->
+            { gs
+                | platforms =
+                    newPlatform
+                        (getRandomInRange b 0 (canvasS.w - platformS.w))
+                        0
+                        :: gs.platforms
+            }

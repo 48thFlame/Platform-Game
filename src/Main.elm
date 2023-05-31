@@ -8,6 +8,7 @@ import Game exposing (..)
 import Html
 import Html.Attributes as HtmlA
 import Json.Decode as Decode
+import Random
 import Svg
 import Svg.Attributes as SvgA
 
@@ -40,13 +41,17 @@ initialModel : Flags -> ( Model, Cmd Msg )
 initialModel d =
     ( { gs = newGameState
       , keys = initialKeysPressed
+      , rand = 0
       , middlePos = { x = d.x, y = d.y }
       , mousePressed = False
       , mousePos = newPosition 0 0
       }
-    , Cmd.none
+    , randCommand
     )
-        |> Debug.log "init"
+
+
+randCommand =
+    Random.generate NewRandom (Random.float 0 1)
 
 
 
@@ -56,6 +61,7 @@ initialModel d =
 type alias Model =
     { gs : GameState
     , keys : KeysPressed
+    , rand : Float
 
     -- , pageDim : Dimension
     , middlePos : Position
@@ -91,6 +97,7 @@ type Msg
     | KeyUp String
     | MouseDown Float Float
     | MouseMove Float Float
+    | NewRandom Float
     | MouseUp
     | Blur Events.Visibility
 
@@ -111,7 +118,10 @@ update msg model =
                     else
                         ( Nothing, model.middlePos )
             in
-            ( { model | gs = updateGameStateModelCall delta model.keys mouse model.gs }, Cmd.none )
+            ( { model | gs = updateGameStateModelCall delta model.rand model.keys mouse model.gs }, randCommand )
+
+        NewRandom r ->
+            ( { model | rand = r }, Cmd.none )
 
         KeyDown key ->
             -- add key to model.keys
