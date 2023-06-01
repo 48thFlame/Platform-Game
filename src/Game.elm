@@ -3,49 +3,23 @@ module Game exposing (..)
 import Common exposing (..)
 import Constants exposing (..)
 import Engine exposing (..)
-import Lava exposing (newLava)
+import Lava exposing (newLava, updateLava)
 import Plat exposing (..)
 import Player exposing (..)
 import Svg
 import Svg.Attributes as SvgA
 
 
+getGameOverStatus : GameState -> GameStatus
+getGameOverStatus gs =
+    if isCollided gs.lava gs.player.eb then
+        GameOver
 
--- module Main exposing (main)
--- import Browser
--- import Html exposing (..)
--- main : Program flags Model Msg
--- main =
---     Browser.element
---         { init = init
---         , view = view
---         , update = update
---         , subscriptions = subscriptions
---         }
--- type alias Model =
---     { property : Int
---     , property2 : String
---     }
--- init : flags -> ( Model, Cmd Msg )
--- init flags =
---     ( Model 0 "modelInitialValue2", Cmd.none )
--- type Msg
---     = Msg1
---     | Msg2
--- update : Msg -> Model -> ( Model, Cmd Msg )
--- update msg model =
---     case msg of
---         Msg1 ->
---             ( model, Cmd.none )
---         Msg2 ->
---             ( model, Cmd.none )
--- subscriptions : Model -> Sub Msg
--- subscriptions model =
---     Sub.none
--- view : Model -> Html Msg
--- view model =
---     div []
---         [ text "New Element" ]
+    else
+        Playing
+
+
+
 -- INIT
 
 
@@ -55,6 +29,8 @@ newGameState =
     , platforms = []
     , score = 0
     , lava = newLava
+
+    -- , gameStatus = Menu
     }
 
 
@@ -67,6 +43,8 @@ type alias GameState =
     , platforms : List Platform
     , lava : EntityBase
     , score : Int
+
+    -- , gameStatus : GameStatus
     }
 
 
@@ -74,12 +52,25 @@ type alias GameState =
 -- UPDATE
 
 
-updateGameStateModelCall : Float -> Float -> KeysPressed -> ( Maybe Position, Position ) -> GameState -> GameState
+updateGameStateModelCall :
+    Float
+    -> Float
+    -> KeysPressed
+    -> ( Maybe Position, Position )
+    -> GameState
+    -> GameState
 updateGameStateModelCall delta rand keys mouse gs =
+    -- case gs.gameStatus of
+    -- Playing ->
     List.foldl
         (updateGameState delta (lcgRandom (lcgRandom (lcgRandom rand))))
         gs
         (getGameMsgs keys mouse (lcgRandom rand) gs)
+
+
+
+-- _ ->
+--     gs
 
 
 type GameMsg
@@ -114,6 +105,7 @@ updateGameState delta rand msg gs =
             { gs
                 | player = playerAnimationFrame delta gs.score colliders gs.player
                 , platforms = newPlatforms
+                , lava = updateLava gs.score gs.lava
                 , score = gs.score + scoreIncrease
             }
 
@@ -142,6 +134,8 @@ getGameMsgs keys mouse rand gs =
         keyCheckFunc kl =
             List.any (isPressed keys) kl
     in
+    -- case gs.gameStatus of
+    --     Playing ->
     [ Just AnimationFrame
     , if keyCheckFunc upKeys then
         Just JumpButton
@@ -169,8 +163,14 @@ getGameMsgs keys mouse rand gs =
                         rand
                         (platformS.newYA + sqrt (difficultyIncrease gs.score))
                         (platformS.newYB + sqrt (difficultyIncrease gs.score))
+
+                -- |> Debug.log "d"
             in
             if p.pos.y > yToNew then
+                let
+                    _ =
+                        Debug.log "d" yToNew
+                in
                 Just NewPlatform
 
             else
@@ -206,6 +206,8 @@ getGameMsgs keys mouse rand gs =
 
 viewGameState : GameState -> Svg.Svg msg
 viewGameState gs =
+    -- case gs.gameStatus of
+    --     Playing ->
     Svg.g
         []
         [ viewEntity "assets/lava.png" gs.lava
@@ -213,3 +215,9 @@ viewGameState gs =
         , Svg.g [] (List.map (viewEntity "assets/platform.png") gs.platforms)
         , Svg.text_ [ SvgA.x "7", SvgA.y "20" ] [ Svg.text (String.fromInt gs.score) ]
         ]
+
+
+
+-- GameOver ->
+--     Html.div [] [ Html.text "GameOver!" ]
+-- Menu

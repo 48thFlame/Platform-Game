@@ -4,6 +4,12 @@ import Constants exposing (..)
 import Engine exposing (..)
 
 
+type GameStatus
+    = Menu
+    | Playing
+    | GameOver
+
+
 difficultyIncrease : Int -> Float
 difficultyIncrease score =
     let
@@ -13,8 +19,8 @@ difficultyIncrease score =
         i =
             sqrt fs
                 ^ 1.2
-                + 8
-                |> Debug.log "i:"
+                + 20
+                -- |> Debug.log "i:"
     in
     i
 

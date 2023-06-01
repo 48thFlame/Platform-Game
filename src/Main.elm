@@ -2,11 +2,13 @@ module Main exposing (main)
 
 import Browser
 import Browser.Events as Events
+import Common exposing (GameStatus(..))
 import Constants exposing (..)
 import Engine exposing (..)
 import Game exposing (..)
 import Html
 import Html.Attributes as HtmlA
+import Html.Events as HtmlEvents
 import Json.Decode as Decode
 import Random
 import Svg
@@ -40,6 +42,9 @@ type alias Flags =
 initialModel : Flags -> ( Model, Cmd Msg )
 initialModel d =
     ( { gs = newGameState
+
+      --   , gameStatus = GameOver
+      , gameStatus = Menu
       , keys = initialKeysPressed
       , rand = 0
       , middlePos = { x = d.x, y = d.y }
@@ -60,6 +65,7 @@ randCommand =
 
 type alias Model =
     { gs : GameState
+    , gameStatus : GameStatus
     , keys : KeysPressed
     , rand : Float
 
@@ -78,13 +84,46 @@ view : Model -> Html.Html Msg
 view model =
     Html.div
         [ HtmlA.class "canvasContainer" ]
-        [ Svg.svg
-            [ SvgA.viewBox ("0 0 " ++ canvasS.sw ++ " " ++ canvasS.sh)
-            , SvgA.class "canvas"
-            ]
-            [ viewGameState model.gs
-            ]
-        ]
+        (case model.gameStatus of
+            Playing ->
+                [ Svg.svg
+                    [ SvgA.viewBox ("0 0 " ++ canvasS.sw ++ " " ++ canvasS.sh)
+                    , SvgA.class "canvas"
+                    ]
+                    [ viewGameState model.gs
+                    ]
+                ]
+
+            GameOver ->
+                [ Html.br [] []
+                , Html.h1 [ HtmlA.class "title" ] [ Html.text "נגמר המשחק!" ]
+                , Html.p [ HtmlA.class "pDescription" ]
+                    [ Html.text "צברת "
+                    , Html.text (model.gs.score |> String.fromInt)
+                    , Html.text " נקודות"
+                    ]
+                , Html.button [ HtmlEvents.onClick ToMenu, HtmlA.class "controlButton" ] [ Html.text "לתפריט" ]
+                ]
+
+            Menu ->
+                [ Html.br [] []
+                , Html.h1 [ HtmlA.class "title" ] [ Html.text "ברוכים הבאים למשחק!" ]
+                , Html.div [ HtmlA.class "controlContainer" ]
+                    [ Html.button [ HtmlEvents.onClick PlayButton, HtmlA.class "controlButton" ] [ Html.text "שחק" ]
+                    , Html.br [] []
+                    , Html.br [] []
+                    , Html.h3 [ HtmlA.class "subTitle" ] [ Html.text "הסבר:" ]
+                    , Html.p
+                        [ HtmlA.class "pDescription"
+                        ]
+                        [ Html.text "קפוץ מפלטפורמה לפלטפורמה והימנע ממגע בלבה."
+                        ]
+                    , Html.p [] [ Html.text "המשחק תוכנת על ידי ", Html.a [ HtmlA.href "http://www.github.com/48thFlame" ] [ Html.text "אבישי" ] ]
+
+                    -- , Html.button [ HtmlA.class "controlButton" ] [ Html.text "?" ]
+                    ]
+                ]
+        )
 
 
 
@@ -100,11 +139,19 @@ type Msg
     | NewRandom Float
     | MouseUp
     | Blur Events.Visibility
+    | PlayButton
+    | ToMenu
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        PlayButton ->
+            ( { model | gameStatus = Playing, gs = newGameState }, Cmd.none )
+
+        ToMenu ->
+            ( { model | gameStatus = Menu }, Cmd.none )
+
         OnAnimationFrame deltaTime ->
             -- main game loop
             let
@@ -118,7 +165,12 @@ update msg model =
                     else
                         ( Nothing, model.middlePos )
             in
-            ( { model | gs = updateGameStateModelCall delta model.rand model.keys mouse model.gs }, randCommand )
+            ( { model
+                | gs = updateGameStateModelCall delta model.rand model.keys mouse model.gs
+                , gameStatus = getGameOverStatus model.gs
+              }
+            , randCommand
+            )
 
         NewRandom r ->
             ( { model | rand = r }, Cmd.none )
@@ -152,23 +204,29 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Events.onAnimationFrameDelta OnAnimationFrame
-        , Events.onKeyDown (keyDecoder KeyDown)
-        , Events.onKeyUp (keyDecoder KeyUp)
-        , Events.onVisibilityChange Blur
-        , Events.onMouseDown
-            (Decode.map2 MouseDown
-                (Decode.field "clientX" Decode.float)
-                (Decode.field "clientY" Decode.float)
-            )
-        , Events.onMouseUp (Decode.succeed MouseUp)
-        , if model.mousePressed then
-            Events.onMouseMove
-                (Decode.map2 MouseMove
-                    (Decode.field "clientX" Decode.float)
-                    (Decode.field "clientY" Decode.float)
-                )
+        (case model.gameStatus of
+            Playing ->
+                [ Events.onAnimationFrameDelta OnAnimationFrame
+                , Events.onKeyDown (keyDecoder KeyDown)
+                , Events.onKeyUp (keyDecoder KeyUp)
+                , Events.onVisibilityChange Blur
+                , Events.onMouseDown
+                    (Decode.map2 MouseDown
+                        (Decode.field "clientX" Decode.float)
+                        (Decode.field "clientY" Decode.float)
+                    )
+                , Events.onMouseUp (Decode.succeed MouseUp)
+                , if model.mousePressed then
+                    Events.onMouseMove
+                        (Decode.map2 MouseMove
+                            (Decode.field "clientX" Decode.float)
+                            (Decode.field "clientY" Decode.float)
+                        )
 
-          else
-            Sub.none
-        ]
+                  else
+                    Sub.none
+                ]
+
+            _ ->
+                [ Sub.none ]
+        )

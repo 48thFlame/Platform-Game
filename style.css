@@ -1,18 +1,42 @@
 body {
     background-color: #b0c4de;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
 .canvasContainer {
     text-align: center;
     margin: auto;
     margin-top: 3vh;
-    height: 90vh;
+    margin-bottom: 0;
+    height: 80vh;
     aspect-ratio: 120/280;
-    /* width: 90vw; */
-    /* aspect-ratio: 780/640; */
-    /* aspect-ratio: 200/600; */
+    background: #efefef;
+    position: relative;
 }
 
+.controlButton {
+    border: rgb(31, 31, 31) 3px solid;
+    border-radius: 8px;
+    font-size: x-large;
+
+}
+
+.title {
+    font-size: 40px;
+}
+
+.subTitle {
+    /* margin-bottom: 0px; */
+}
+
+.pDescription {
+    margin-top: 0px;
+    font-size: large;
+}
+
+/* .controlContainer {} */
+
+
 .canvas {
-    background: #efefef;
+    direction: ltr;
 }
