@@ -1,5 +1,6 @@
 module Player exposing (..)
 
+import Common exposing (difficultyIncrease)
 import Constants exposing (..)
 import Engine exposing (..)
 
@@ -27,8 +28,8 @@ type alias Player =
 
 {-| Respond to `SpaceBar` `GameMsg`
 -}
-playerUp : List EntityBase -> Player -> Player
-playerUp colliders plr =
+playerUp : List EntityBase -> Int -> Player -> Player
+playerUp colliders score plr =
     let
         -- {-| checks whether plr can jump - touching ground or something
         -- -}
@@ -36,30 +37,26 @@ playerUp colliders plr =
         playerCanJump =
             List.any (isCollided (actAction 1 (MoveUpDown plrS.jumpCheckBuffer) plr.eb)) colliders
 
-        --  |> yTooBig canvasS.h
+        vel =
+            plr.vel
+
+        newVel =
+            { vel | dy = -(plrS.jumpStrength + difficultyIncrease score) }
     in
     if playerCanJump then
-        -- if List.any (isCollided plr.eb) clrs then
-        -- plr
-        -- else
-        playerActJump plr
+        { plr | vel = newVel }
 
     else
         plr
 
 
-{-| Make player jump without checking if able
--}
-playerActJump : Player -> Player
-playerActJump plr =
-    let
-        vel =
-            plr.vel
 
-        newVel =
-            { vel | dy = -plrS.jumpStrength }
-    in
-    { plr | vel = newVel }
+-- {-| Make player jump without checking if able
+-- -}
+-- playerActJump : Player -> Player
+-- playerActJump plr =
+--     let
+--     in
 
 
 {-| Pressed right going key
@@ -144,8 +141,8 @@ playerActActionSafely delta actionValue actionType colliders plr =
 
 {-| Update Player vel - gravity and friction
 -}
-playerUpdateVel : Float -> Player -> Player
-playerUpdateVel delta plr =
+playerUpdateVel : Float -> Int -> Player -> Player
+playerUpdateVel delta score plr =
     let
         vel =
             plr.vel
@@ -153,7 +150,7 @@ playerUpdateVel delta plr =
         newDy =
             let
                 value =
-                    vel.dy + plrS.gravityStrength * delta
+                    vel.dy + (plrS.gravityStrength + difficultyIncrease score) * delta
             in
             -- if plr.eb.pos.y < canvasS.h then
             if value >= plrS.maxDy then
@@ -196,8 +193,8 @@ playerUpdateVel delta plr =
 
 {-| Game update message happened - apply pending changes
 -}
-playerAnimationFrame : Float -> List EntityBase -> Player -> Player
-playerAnimationFrame delta colliders plr =
+playerAnimationFrame : Float -> Int -> List EntityBase -> Player -> Player
+playerAnimationFrame delta score colliders plr =
     playerActActionSafely delta
         plr.vel.dy
         MoveUpDown
@@ -207,4 +204,4 @@ playerAnimationFrame delta colliders plr =
             plr.vel.dx
             MoveLeftRight
             colliders
-        |> playerUpdateVel delta
+        |> playerUpdateVel delta score

@@ -1,46 +1,51 @@
 module Game exposing (..)
 
+import Common exposing (..)
 import Constants exposing (..)
 import Engine exposing (..)
+import Lava exposing (newLava)
+import Plat exposing (..)
 import Player exposing (..)
 import Svg
 import Svg.Attributes as SvgA
 
 
-newPlatform : Float -> Float -> Platform
-newPlatform x y =
-    { dim = newDimension platformS.w platformS.h
-    , pos = newPosition x y
-    , rot = initialRotation
-    }
 
-
-type alias Platform =
-    EntityBase
-
-
-platformsAnimationFrame : Float -> Float -> List Platform -> ( List Platform, Int )
-platformsAnimationFrame delta rand platforms =
-    let
-        firstLen =
-            List.length platforms
-
-        movedDown =
-            List.map (actAction delta (MoveUpDown platformS.speed)) platforms
-
-        filtered =
-            List.filter (\p -> p.pos.y < canvasS.h) movedDown
-
-        secondLen =
-            List.length filtered
-
-        scoreIncrease =
-            firstLen - secondLen
-    in
-    ( filtered, scoreIncrease )
-
-
-
+-- module Main exposing (main)
+-- import Browser
+-- import Html exposing (..)
+-- main : Program flags Model Msg
+-- main =
+--     Browser.element
+--         { init = init
+--         , view = view
+--         , update = update
+--         , subscriptions = subscriptions
+--         }
+-- type alias Model =
+--     { property : Int
+--     , property2 : String
+--     }
+-- init : flags -> ( Model, Cmd Msg )
+-- init flags =
+--     ( Model 0 "modelInitialValue2", Cmd.none )
+-- type Msg
+--     = Msg1
+--     | Msg2
+-- update : Msg -> Model -> ( Model, Cmd Msg )
+-- update msg model =
+--     case msg of
+--         Msg1 ->
+--             ( model, Cmd.none )
+--         Msg2 ->
+--             ( model, Cmd.none )
+-- subscriptions : Model -> Sub Msg
+-- subscriptions model =
+--     Sub.none
+-- view : Model -> Html Msg
+-- view model =
+--     div []
+--         [ text "New Element" ]
 -- INIT
 
 
@@ -49,6 +54,7 @@ newGameState =
     { player = newPlayer
     , platforms = []
     , score = 0
+    , lava = newLava
     }
 
 
@@ -59,26 +65,21 @@ newGameState =
 type alias GameState =
     { player : Player
     , platforms : List Platform
+    , lava : EntityBase
     , score : Int
     }
 
 
 
--- VIEW
-
-
-viewGameState : GameState -> Svg.Svg msg
-viewGameState gs =
-    Svg.g
-        []
-        [ Svg.text_ [ SvgA.x "7", SvgA.y "20" ] [ Svg.text (String.fromInt gs.score) ]
-        , viewEntity "assets/player.png" gs.player.eb
-        , Svg.g [] (List.map (viewEntity "assets/platform.png") gs.platforms)
-        ]
-
-
-
 -- UPDATE
+
+
+updateGameStateModelCall : Float -> Float -> KeysPressed -> ( Maybe Position, Position ) -> GameState -> GameState
+updateGameStateModelCall delta rand keys mouse gs =
+    List.foldl
+        (updateGameState delta (lcgRandom (lcgRandom (lcgRandom rand))))
+        gs
+        (getGameMsgs keys mouse (lcgRandom rand) gs)
 
 
 type GameMsg
@@ -89,9 +90,50 @@ type GameMsg
     | NewPlatform
 
 
-updateGameStateModelCall : Float -> Float -> KeysPressed -> ( Maybe Position, Position ) -> GameState -> GameState
-updateGameStateModelCall delta rand keys mouse gs =
-    List.foldl (updateGameState delta (lcgRandom (lcgRandom (lcgRandom rand)))) gs (getGameMsgs keys mouse (lcgRandom rand) gs)
+updateGameState : Float -> Float -> GameMsg -> GameState -> GameState
+updateGameState delta rand msg gs =
+    let
+        colliders =
+            gs.platforms ++ borderColliders
+
+        a =
+            lcgRandom rand
+    in
+    case msg of
+        AnimationFrame ->
+            let
+                platformUpdate =
+                    platformsAnimationFrame delta gs.score gs.platforms
+
+                newPlatforms =
+                    Tuple.first platformUpdate
+
+                scoreIncrease =
+                    Tuple.second platformUpdate
+            in
+            { gs
+                | player = playerAnimationFrame delta gs.score colliders gs.player
+                , platforms = newPlatforms
+                , score = gs.score + scoreIncrease
+            }
+
+        JumpButton ->
+            { gs | player = playerUp colliders gs.score gs.player }
+
+        RightButton ->
+            { gs | player = playerRight gs.player }
+
+        LeftButton ->
+            { gs | player = playerLeft gs.player }
+
+        NewPlatform ->
+            { gs
+                | platforms =
+                    newPlatform
+                        (getRandomInRange a 0 (canvasS.w - platformS.w))
+                        0
+                        :: gs.platforms
+            }
 
 
 getGameMsgs : KeysPressed -> ( Maybe Position, Position ) -> Float -> GameState -> List GameMsg
@@ -122,9 +164,11 @@ getGameMsgs keys mouse rand gs =
 
         Just p ->
             let
-                -- prefers lower numbers because keeps trying until works
                 yToNew =
-                    getRandomInRange rand platformS.newYA platformS.newYB
+                    getRandomInRange
+                        rand
+                        (platformS.newYA + sqrt (difficultyIncrease gs.score))
+                        (platformS.newYB + sqrt (difficultyIncrease gs.score))
             in
             if p.pos.y > yToNew then
                 Just NewPlatform
@@ -156,72 +200,16 @@ getGameMsgs keys mouse rand gs =
         |> List.filterMap identity
 
 
-borderColliders : List EntityBase
-borderColliders =
-    [ { pos = newPosition -101 0
-      , dim = newDimension 100 canvasS.h
-      , rot = initialRotation
-      }
 
-    -- , { pos = newPosition -101 0
-    --   , dim = newDimension canvasS.w 100
-    --   , rot = initialRotation
-    --   }
-    , { pos = newPosition canvasS.w 0
-      , dim = newDimension 100 canvasS.h
-      , rot = initialRotation
-      }
-    , { pos = newPosition 0 canvasS.h
-      , dim = newDimension canvasS.w 100
-      , rot = initialRotation
-      }
-    ]
+-- VIEW
 
 
-updateGameState : Float -> Float -> GameMsg -> GameState -> GameState
-updateGameState delta rand msg gs =
-    let
-        colliders =
-            gs.platforms ++ borderColliders
-
-        a =
-            lcgRandom rand
-
-        b =
-            lcgRandom a
-    in
-    case msg of
-        AnimationFrame ->
-            let
-                platformUpdate =
-                    platformsAnimationFrame delta a gs.platforms
-
-                newPlatforms =
-                    Tuple.first platformUpdate
-
-                scoreIncrease =
-                    Tuple.second platformUpdate
-            in
-            { gs
-                | player = playerAnimationFrame delta colliders gs.player
-                , platforms = newPlatforms
-                , score = gs.score + scoreIncrease
-            }
-
-        JumpButton ->
-            { gs | player = playerUp colliders gs.player }
-
-        RightButton ->
-            { gs | player = playerRight gs.player }
-
-        LeftButton ->
-            { gs | player = playerLeft gs.player }
-
-        NewPlatform ->
-            { gs
-                | platforms =
-                    newPlatform
-                        (getRandomInRange b 0 (canvasS.w - platformS.w))
-                        0
-                        :: gs.platforms
-            }
+viewGameState : GameState -> Svg.Svg msg
+viewGameState gs =
+    Svg.g
+        []
+        [ viewEntity "assets/lava.png" gs.lava
+        , viewEntity "assets/player.png" gs.player.eb
+        , Svg.g [] (List.map (viewEntity "assets/platform.png") gs.platforms)
+        , Svg.text_ [ SvgA.x "7", SvgA.y "20" ] [ Svg.text (String.fromInt gs.score) ]
+        ]

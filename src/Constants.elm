@@ -8,7 +8,7 @@ canvasS =
 
 plrS =
     { gravityStrength = 650
-    , jumpStrength = 280 -- can jump up to comfortably 60 to a max of 64
+    , jumpStrength = 273 -- can jump up to comfortably 60 to a max of 64
     , maxDy = 480
     , jumpCheckBuffer = 4
     , frictionStrength = 1800
