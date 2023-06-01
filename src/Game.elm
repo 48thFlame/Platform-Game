@@ -166,10 +166,6 @@ getGameMsgs keys mouse rand gs =
                     [ Nothing ]
 
                 ( Just pos, middlePos ) ->
-                    let
-                        _ =
-                            Debug.log "abcde" ( pos, middlePos )
-                    in
                     [ if pos.x > middlePos.x + 25 then
                         Just RightButton
 
