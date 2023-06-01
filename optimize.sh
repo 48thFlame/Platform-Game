@@ -2,7 +2,7 @@
 
 set -e
 
-js="main.js"
+js="temp.js"
 min="elm.js"
 
 elm make --optimize --output=$js $@
