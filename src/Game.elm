@@ -55,11 +55,15 @@ updateGameStateModelCall :
     -> ( Maybe Position, Position )
     -> GameState
     -> GameState
-updateGameStateModelCall delta rand keys mouse gs =
+updateGameStateModelCall delta rand keys touch gs =
     List.foldl
         (updateGameState delta (lcgRandom (lcgRandom (lcgRandom rand))))
         gs
-        (getGameMsgs keys mouse (lcgRandom rand) gs)
+        (getGameMsgs keys touch (lcgRandom rand) gs)
+
+
+
+-- (getGameMsgs keys mouse (lcgRandom rand) gs)
 
 
 type GameMsg
@@ -162,6 +166,10 @@ getGameMsgs keys mouse rand gs =
                     [ Nothing ]
 
                 ( Just pos, middlePos ) ->
+                    let
+                        _ =
+                            Debug.log "abcde" ( pos, middlePos )
+                    in
                     [ if pos.x > middlePos.x + 25 then
                         Just RightButton
 
@@ -170,7 +178,7 @@ getGameMsgs keys mouse rand gs =
 
                       else
                         Nothing
-                    , if pos.y < middlePos.y then
+                    , if pos.y < middlePos.y - 50 then
                         Just JumpButton
 
                       else

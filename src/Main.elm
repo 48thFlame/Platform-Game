@@ -9,6 +9,7 @@ import Game exposing (..)
 import Html
 import Html.Attributes as HtmlA
 import Html.Events as HtmlEvents
+import Html.Events.Extra.Touch as Touch
 import Json.Decode as Decode
 import Random
 import Svg
@@ -86,6 +87,9 @@ view model =
                 [ Svg.svg
                     [ SvgA.viewBox ("0 0 " ++ canvasS.sw ++ " " ++ canvasS.sh)
                     , SvgA.class "canvas"
+                    , Touch.onStart (ClickDown << touchCoordinates)
+                    , Touch.onMove (ClickMove << touchCoordinates)
+                    , Touch.onEnd (\_ -> ClickUp)
                     ]
                     [ viewGameState model.gs
                     ]
@@ -115,10 +119,17 @@ view model =
                         ]
                         [ Html.text "קפוץ מפלטפורמה לפלטפורמה והימנע ממגע בלבה."
                         ]
-                    , Html.p [] [ Html.text "המשחק תוכנת על ידי ", Html.a [ HtmlA.href "http://www.github.com/48thFlame" ] [ Html.text "אבישי" ] ]
+                    , Html.p [ HtmlA.class "pDescription" ] [ Html.text "המשחק תוכנת על ידי ", Html.a [ HtmlA.class "pDescription", HtmlA.href "http://www.github.com/48thFlame" ] [ Html.text "אבישי" ] ]
                     ]
                 ]
         )
+
+
+touchCoordinates : Touch.Event -> ( Float, Float )
+touchCoordinates touchEvent =
+    List.head touchEvent.changedTouches
+        |> Maybe.map .clientPos
+        |> Maybe.withDefault ( 0, 0 )
 
 
 
@@ -129,10 +140,10 @@ type Msg
     = OnAnimationFrame Float
     | KeyDown String
     | KeyUp String
-    | MouseDown Float Float
-    | MouseMove Float Float
+    | ClickDown ( Float, Float )
+    | ClickMove ( Float, Float )
+    | ClickUp
     | NewRandom Float
-    | MouseUp
     | Blur Events.Visibility
     | PlayButton
     | ToMenu
@@ -178,13 +189,13 @@ update msg model =
             -- remove key from model.keys
             ( applyFuncToModelKeys model (removeKey key), Cmd.none )
 
-        MouseDown x y ->
+        ClickDown ( x, y ) ->
             ( { model | mousePressed = True, mousePos = newPosition x y }, Cmd.none )
 
-        MouseUp ->
+        ClickUp ->
             ( { model | mousePressed = False }, Cmd.none )
 
-        MouseMove x y ->
+        ClickMove ( x, y ) ->
             ( { model | mousePos = newPosition x y }, Cmd.none )
 
         Blur _ ->
@@ -205,21 +216,22 @@ subscriptions model =
                 , Events.onKeyDown (keyDecoder KeyDown)
                 , Events.onKeyUp (keyDecoder KeyUp)
                 , Events.onVisibilityChange Blur
-                , Events.onMouseDown
-                    (Decode.map2 MouseDown
-                        (Decode.field "clientX" Decode.float)
-                        (Decode.field "clientY" Decode.float)
-                    )
-                , Events.onMouseUp (Decode.succeed MouseUp)
-                , if model.mousePressed then
-                    Events.onMouseMove
-                        (Decode.map2 MouseMove
-                            (Decode.field "clientX" Decode.float)
-                            (Decode.field "clientY" Decode.float)
-                        )
 
-                  else
-                    Sub.none
+                -- , Events.onMouseDown
+                --     (Decode.map2 ClickDown
+                --         ( Decode.field "clientX" Decode.float
+                --         , Decode.field "clientY" Decode.float
+                --         )
+                --     )
+                -- , Events.onMouseUp (Decode.succeed MouseUp)
+                -- , if model.mousePressed then
+                --     Events.onMouseMove
+                --         (Decode.map2 ClickMove
+                --             (Decode.field "clientX" Decode.float)
+                --             (Decode.field "clientY" Decode.float)
+                --         )
+                --   else
+                --     Sub.none
                 ]
 
             _ ->
