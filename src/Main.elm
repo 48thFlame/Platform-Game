@@ -10,7 +10,6 @@ import Html
 import Html.Attributes as HtmlA
 import Html.Events as HtmlEvents
 import Html.Events.Extra.Touch as Touch
-import Json.Decode as Decode
 import Random
 import Svg
 import Svg.Attributes as SvgA
@@ -216,22 +215,6 @@ subscriptions model =
                 , Events.onKeyDown (keyDecoder KeyDown)
                 , Events.onKeyUp (keyDecoder KeyUp)
                 , Events.onVisibilityChange Blur
-
-                -- , Events.onMouseDown
-                --     (Decode.map2 ClickDown
-                --         ( Decode.field "clientX" Decode.float
-                --         , Decode.field "clientY" Decode.float
-                --         )
-                --     )
-                -- , Events.onMouseUp (Decode.succeed MouseUp)
-                -- , if model.mousePressed then
-                --     Events.onMouseMove
-                --         (Decode.map2 ClickMove
-                --             (Decode.field "clientX" Decode.float)
-                --             (Decode.field "clientY" Decode.float)
-                --         )
-                --   else
-                --     Sub.none
                 ]
 
             _ ->
