@@ -25,18 +25,15 @@ body {
     font-size: 40px;
 }
 
-.subTitle {
-    /* margin-bottom: 0px; */
-}
 
 .pDescription {
     margin-top: 0px;
     font-size: large;
 }
 
-/* .controlContainer {} */
-
-
 .canvas {
     direction: ltr;
 }
+
+/* .subTitle {} */
+/* .controlContainer {} */

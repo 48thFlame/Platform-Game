@@ -1,6 +1,6 @@
 module Player exposing (..)
 
-import Common exposing (difficultyIncrease)
+import Common exposing (..)
 import Constants exposing (..)
 import Engine exposing (..)
 
@@ -48,15 +48,6 @@ playerUp colliders score plr =
 
     else
         plr
-
-
-
--- {-| Make player jump without checking if able
--- -}
--- playerActJump : Player -> Player
--- playerActJump plr =
---     let
---     in
 
 
 {-| Pressed right going key
@@ -120,7 +111,7 @@ playerActActionSafely delta actionValue actionType colliders plr =
                                 plr.vel
                         in
                         if vel.dy > 0 then
-                            --                 -- if moving up down fix dumb issue where freezes in the air
+                            -- if moving up down fix dumb issue where freezes in the air
                             { plr | vel = { vel | dy = 0 } }
 
                         else if vel.dy < 0 then
@@ -152,10 +143,8 @@ playerUpdateVel delta score plr =
                 value =
                     vel.dy + (plrS.gravityStrength + difficultyIncrease score) * delta
             in
-            -- if plr.eb.pos.y < canvasS.h then
             if value >= plrS.maxDy then
                 plrS.maxDy
-                -- - plrS.gravityStrength * delta
 
             else
                 value

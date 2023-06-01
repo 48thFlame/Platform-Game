@@ -3,12 +3,6 @@ module Lava exposing (..)
 import Common exposing (..)
 import Constants exposing (..)
 import Engine exposing (..)
-import Player exposing (Player)
-
-
-
--- import Game exposing (GameStatus)
--- import Game exposing (GameStatus(..))
 
 
 newLava : EntityBase
@@ -26,6 +20,3 @@ updateLava score lava =
             lava.pos
     in
     { lava | pos = { pos | y = lavaS.startingY - difficultyIncrease score } }
-
-
-

@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Browser.Events as Events
-import Common exposing (GameStatus(..))
+import Common exposing (..)
 import Constants exposing (..)
 import Engine exposing (..)
 import Game exposing (..)
@@ -42,8 +42,6 @@ type alias Flags =
 initialModel : Flags -> ( Model, Cmd Msg )
 initialModel d =
     ( { gs = newGameState
-
-      --   , gameStatus = GameOver
       , gameStatus = Menu
       , keys = initialKeysPressed
       , rand = 0
@@ -55,6 +53,7 @@ initialModel d =
     )
 
 
+randCommand : Cmd Msg
 randCommand =
     Random.generate NewRandom (Random.float 0 1)
 
@@ -68,8 +67,6 @@ type alias Model =
     , gameStatus : GameStatus
     , keys : KeysPressed
     , rand : Float
-
-    -- , pageDim : Dimension
     , middlePos : Position
     , mousePressed : Bool
     , mousePos : Position
@@ -119,8 +116,6 @@ view model =
                         [ Html.text "קפוץ מפלטפורמה לפלטפורמה והימנע ממגע בלבה."
                         ]
                     , Html.p [] [ Html.text "המשחק תוכנת על ידי ", Html.a [ HtmlA.href "http://www.github.com/48thFlame" ] [ Html.text "אבישי" ] ]
-
-                    -- , Html.button [ HtmlA.class "controlButton" ] [ Html.text "?" ]
                     ]
                 ]
         )

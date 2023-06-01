@@ -3,7 +3,7 @@ module Game exposing (..)
 import Common exposing (..)
 import Constants exposing (..)
 import Engine exposing (..)
-import Lava exposing (newLava, updateLava)
+import Lava exposing (..)
 import Plat exposing (..)
 import Player exposing (..)
 import Svg
@@ -29,8 +29,6 @@ newGameState =
     , platforms = []
     , score = 0
     , lava = newLava
-
-    -- , gameStatus = Menu
     }
 
 
@@ -43,8 +41,6 @@ type alias GameState =
     , platforms : List Platform
     , lava : EntityBase
     , score : Int
-
-    -- , gameStatus : GameStatus
     }
 
 
@@ -60,17 +56,10 @@ updateGameStateModelCall :
     -> GameState
     -> GameState
 updateGameStateModelCall delta rand keys mouse gs =
-    -- case gs.gameStatus of
-    -- Playing ->
     List.foldl
         (updateGameState delta (lcgRandom (lcgRandom (lcgRandom rand))))
         gs
         (getGameMsgs keys mouse (lcgRandom rand) gs)
-
-
-
--- _ ->
---     gs
 
 
 type GameMsg
@@ -134,8 +123,6 @@ getGameMsgs keys mouse rand gs =
         keyCheckFunc kl =
             List.any (isPressed keys) kl
     in
-    -- case gs.gameStatus of
-    --     Playing ->
     [ Just AnimationFrame
     , if keyCheckFunc upKeys then
         Just JumpButton
@@ -163,8 +150,6 @@ getGameMsgs keys mouse rand gs =
                         rand
                         (platformS.newYA + sqrt (difficultyIncrease gs.score))
                         (platformS.newYB + sqrt (difficultyIncrease gs.score))
-
-                -- |> Debug.log "d"
             in
             if p.pos.y > yToNew then
                 let
@@ -206,8 +191,6 @@ getGameMsgs keys mouse rand gs =
 
 viewGameState : GameState -> Svg.Svg msg
 viewGameState gs =
-    -- case gs.gameStatus of
-    --     Playing ->
     Svg.g
         []
         [ viewEntity "assets/lava.png" gs.lava
@@ -215,9 +198,3 @@ viewGameState gs =
         , Svg.g [] (List.map (viewEntity "assets/platform.png") gs.platforms)
         , Svg.text_ [ SvgA.x "7", SvgA.y "20" ] [ Svg.text (String.fromInt gs.score) ]
         ]
-
-
-
--- GameOver ->
---     Html.div [] [ Html.text "GameOver!" ]
--- Menu

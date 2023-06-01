@@ -55,8 +55,6 @@ type alias EntityBase =
     { pos : Position -- Top right corner
     , dim : Dimension
     , rot : Rotation
-
-    -- , img : Image -- The image path, such as `assets/ent.png`
     }
 
 
@@ -98,10 +96,6 @@ type EntityAction
     | MoveForward Float
 
 
-
--- | ApplyVelocity Velocity
-
-
 newPosition : Float -> Float -> Position
 newPosition x y =
     { x = x, y = y }
@@ -120,19 +114,6 @@ initialRotation =
 initialVelocity : Velocity
 initialVelocity =
     { dx = 0, dy = 0 }
-
-
-
--- applyVelocity :
---     Float
---     -> { a | eb : EntityBase, vel : Velocity }
---     -> { a | eb : EntityBase, vel : Velocity }
--- applyVelocity delta ent =
---     { ent
---         | eb =
---             actAction delta (MoveUpDown ent.vel.dy) ent.eb
---                 |> actAction delta (MoveLeftRight ent.vel.dx)
---     }
 
 
 getCenterPos : EntityBase -> Position
@@ -181,21 +162,6 @@ actAction delta action ent =
                     { x = x, y = y }
             in
             { ent | pos = newPos }
-
-
-
--- ApplyVelocity vel ->
--- applyVelocity :
---     Float
---     -> { a | eb : EntityBase, vel : Velocity }
---     -> { a | eb : EntityBase, vel : Velocity }
--- applyVelocity delta ent =
---     { ent
---         | eb =
---             actAction delta (MoveUpDown ent.vel.dy) ent.eb
---                 |> actAction delta (MoveLeftRight ent.vel.dx)
---     }
--- ent |> actAction delta (MoveUpDown vel.dy) |> actAction delta (MoveLeftRight vel.dx)
 
 
 getXY : Float -> Float -> ( Float, Float )
