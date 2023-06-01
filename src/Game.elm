@@ -152,10 +152,6 @@ getGameMsgs keys mouse rand gs =
                         (platformS.newYB + sqrt (difficultyIncrease gs.score))
             in
             if p.pos.y > yToNew then
-                let
-                    _ =
-                        Debug.log "d" yToNew
-                in
                 Just NewPlatform
 
             else
