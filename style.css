@@ -5,41 +5,53 @@ body {
     margin: 0;
 }
 
-.canvasContainer {
+.main {
     text-align: center;
     margin: auto;
-    /* margin-left: 0; */
-    /* margin-bottom: 0; */
     margin-top: 1vh;
     height: 90vh;
     aspect-ratio: 120/280;
-    background: #efefef;
+    background: #e9e8df;
     position: relative;
 }
 
-.controlButton {
-    border: rgb(31, 31, 31) 12px solid;
-    /* border-radius: 12px; */
-    /* font-size: x-large; */
-    font-size: 3vh;
+.canvasContainer {
+    display: grid;
+}
 
+
+.canvas {
+    direction: ltr;
+    grid-column: 1;
+    grid-row: 1;
+    z-index: 1;
+}
+
+.mobileExp {
+    grid-column: 1;
+    grid-row: 1;
+    z-index: 0;
+    opacity: 0.25;
+}
+
+.controlButton {
+    color: rgb(31, 31, 31);
+    border: #0a4e57 3px solid;
+    background-color: whitesmoke;
+    font-size: 3vh;
 }
 
 .title {
-    /* font-size: 40px; */
     font-size: 6vh;
 }
 
 
 .pDescription {
     margin-top: 0px;
-    /* font-size: large; */
     font-size: 2vh;
 }
 
-.canvas {
-    direction: ltr;
-}
+
 
 .subTitle {
     font-size: 3vh;

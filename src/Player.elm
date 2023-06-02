@@ -28,8 +28,8 @@ type alias Player =
 
 {-| Respond to `SpaceBar` `GameMsg`
 -}
-playerUp : List EntityBase -> Int -> Player -> Player
-playerUp colliders score plr =
+playerUp : List EntityBase -> Player -> Player
+playerUp colliders plr =
     let
         -- {-| checks whether plr can jump - touching ground or something
         -- -}
@@ -41,7 +41,7 @@ playerUp colliders score plr =
             plr.vel
 
         newVel =
-            { vel | dy = -(plrS.jumpStrength + difficultyIncrease score) }
+            { vel | dy = -plrS.jumpStrength }
     in
     if playerCanJump then
         { plr | vel = newVel }
@@ -132,8 +132,8 @@ playerActActionSafely delta actionValue actionType colliders plr =
 
 {-| Update Player vel - gravity and friction
 -}
-playerUpdateVel : Float -> Int -> Player -> Player
-playerUpdateVel delta score plr =
+playerUpdateVel : Float -> Player -> Player
+playerUpdateVel delta plr =
     let
         vel =
             plr.vel
@@ -141,7 +141,7 @@ playerUpdateVel delta score plr =
         newDy =
             let
                 value =
-                    vel.dy + (plrS.gravityStrength + difficultyIncrease score) * delta
+                    vel.dy + (plrS.gravityStrength {- + ddyIncrease score -}) * delta
             in
             if value >= plrS.maxDy then
                 plrS.maxDy
@@ -162,7 +162,9 @@ playerUpdateVel delta score plr =
                     abs vel.dx
 
                 nDx =
-                    value - plrS.frictionStrength * delta
+                    value - plrS.frictionStrength
+
+                -- * delta
             in
             if nDx > 0 then
                 nDx * sign
@@ -182,8 +184,8 @@ playerUpdateVel delta score plr =
 
 {-| Game update message happened - apply pending changes
 -}
-playerAnimationFrame : Float -> Int -> List EntityBase -> Player -> Player
-playerAnimationFrame delta score colliders plr =
+playerAnimationFrame : Float -> List EntityBase -> Player -> Player
+playerAnimationFrame delta colliders plr =
     playerActActionSafely delta
         plr.vel.dy
         MoveUpDown
@@ -193,4 +195,4 @@ playerAnimationFrame delta score colliders plr =
             plr.vel.dx
             MoveLeftRight
             colliders
-        |> playerUpdateVel delta score
+        |> playerUpdateVel delta

@@ -18,10 +18,13 @@ difficultyIncrease score =
 
         i =
             sqrt fs
-                ^ 1.2
-                + 20
+                ^ 1.8
     in
     i
+
+
+
+-- difficultyIncrease score
 
 
 borderColliders : List EntityBase

@@ -7,29 +7,26 @@ canvasS =
 
 plrS =
     { gravityStrength = 650
-    , jumpStrength = 273
+    , jumpStrength = 248
     , maxDy = 480
     , jumpCheckBuffer = 8
-    , frictionStrength = 1800
-    , leftRightStrength = 120
+    , frictionStrength = 2000
+    , leftRightStrength = 144
     , w = 9
     , h = 12
     }
 
 
 lavaS =
-    { startingY = canvasS.h + 21 }
+    { startingY = canvasS.h + 1 }
 
 
 platformS =
     { w = 24
     , h = 6
-
-    -- , newYA = 55
-    -- , newYB = 71
-    , newYA = 67
-    , newYB = 80
-    , speed = 25
+    , newYA = 50
+    , newYB = 55
+    , speed = 42
     }
 
 
