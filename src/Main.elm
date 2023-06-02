@@ -36,14 +36,20 @@ main =
 type alias Flags =
     { x : Float
     , y : Float
+    , isMobile : Bool
     }
 
 
 initialModel : Flags -> ( Model, Cmd Msg )
 initialModel d =
+    let
+        _ =
+            Debug.log "ismobile" d.isMobile
+    in
     ( { gs = newGameState
       , gameStatus = Menu
       , keys = initialKeysPressed
+      , isMobile = d.isMobile
       , rand = 0
       , middlePos = { x = d.x, y = d.y }
       , mousePressed = False
@@ -67,6 +73,7 @@ type alias Model =
     , gameStatus : GameStatus
     , keys : KeysPressed
     , rand : Float
+    , isMobile : Bool
     , middlePos : Position
     , mousePressed : Bool
     , mousePos : Position
@@ -80,23 +87,43 @@ type alias Model =
 view : Model -> Html.Html Msg
 view model =
     Html.div
-        [ HtmlA.class "canvasContainer" ]
+        [ HtmlA.class "main" ]
         (case model.gameStatus of
             Playing ->
+                let
+                    canvas =
+                        Svg.g
+                            [ SvgA.class "canvas"
+                            ]
+                            [ viewGameState model.gs
+                            ]
+                in
                 [ Svg.svg
-                    [ SvgA.viewBox ("0 0 " ++ canvasS.sw ++ " " ++ canvasS.sh)
-                    , SvgA.class "canvas"
+                    [ SvgA.class "canvasContainer"
+                    , SvgA.viewBox ("0 0 " ++ canvasS.sw ++ " " ++ canvasS.sh)
                     , Touch.onStart (ClickDown << touchCoordinates)
                     , Touch.onMove (ClickMove << touchCoordinates)
                     , Touch.onEnd (\_ -> ClickUp)
                     ]
-                    [ viewGameState model.gs
-                    ]
+                    (if model.isMobile then
+                        [ Svg.g [ SvgA.class "mobileExp" ]
+                            [ viewEntity
+                                "assets/mobileBackground.png"
+                                { pos = newPosition 0 0
+                                , dim = newDimension canvasS.w canvasS.h
+                                , rot = initialRotation
+                                }
+                            ]
+                        , canvas
+                        ]
+
+                     else
+                        [ canvas ]
+                    )
                 ]
 
             GameOver ->
-                [ Html.br [] []
-                , Html.h1 [ HtmlA.class "title" ] [ Html.text "נגמר המשחק!" ]
+                [ Html.h1 [ HtmlA.class "title" ] [ Html.text "נגמר המשחק!" ]
                 , Html.p [ HtmlA.class "pDescription" ]
                     [ Html.text "צברת "
                     , Html.text (model.gs.score |> String.fromInt)
@@ -106,8 +133,7 @@ view model =
                 ]
 
             Menu ->
-                [ Html.br [] []
-                , Html.h1 [ HtmlA.class "title" ] [ Html.text "ברוכים הבאים למשחק!" ]
+                [ Html.h1 [ HtmlA.class "title" ] [ Html.text "ברוכים הבאים למשחק!" ]
                 , Html.div [ HtmlA.class "controlContainer" ]
                     [ Html.button [ HtmlEvents.onClick PlayButton, HtmlA.class "controlButton" ] [ Html.text "שחק" ]
                     , Html.br [] []

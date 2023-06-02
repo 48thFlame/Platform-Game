@@ -96,14 +96,14 @@ updateGameState delta rand msg gs =
                     Tuple.second platformUpdate
             in
             { gs
-                | player = playerAnimationFrame delta gs.score colliders gs.player
+                | player = playerAnimationFrame delta colliders gs.player
                 , platforms = newPlatforms
                 , lava = updateLava gs.score gs.lava
                 , score = gs.score + scoreIncrease
             }
 
         JumpButton ->
-            { gs | player = playerUp colliders gs.score gs.player }
+            { gs | player = playerUp colliders gs.player }
 
         RightButton ->
             { gs | player = playerRight gs.player }
@@ -152,8 +152,8 @@ getGameMsgs keys mouse rand gs =
                 yToNew =
                     getRandomInRange
                         rand
-                        (platformS.newYA + sqrt (difficultyIncrease gs.score))
-                        (platformS.newYB + sqrt (difficultyIncrease gs.score))
+                        platformS.newYA
+                        platformS.newYB
             in
             if p.pos.y > yToNew then
                 Just NewPlatform
@@ -166,15 +166,15 @@ getGameMsgs keys mouse rand gs =
                     [ Nothing ]
 
                 ( Just pos, middlePos ) ->
-                    [ if pos.x > middlePos.x + 25 then
+                    [ if pos.x > middlePos.x then
                         Just RightButton
 
-                      else if pos.x < middlePos.x - 25 then
+                      else if pos.x < middlePos.x then
                         Just LeftButton
 
                       else
                         Nothing
-                    , if pos.y < middlePos.y - 50 then
+                    , if pos.y - 200 < middlePos.y then
                         Just JumpButton
 
                       else
