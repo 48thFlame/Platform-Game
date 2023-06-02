@@ -42,10 +42,6 @@ type alias Flags =
 
 initialModel : Flags -> ( Model, Cmd Msg )
 initialModel d =
-    let
-        _ =
-            Debug.log "ismobile" d.isMobile
-    in
     ( { gs = newGameState
       , gameStatus = Menu
       , keys = initialKeysPressed
