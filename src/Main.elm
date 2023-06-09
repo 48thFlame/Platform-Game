@@ -34,7 +34,8 @@ main =
 
 type alias Flags =
     { x : Float
-    , y : Float
+
+    -- , y : Float
     , isMobile : Bool
     }
 
@@ -46,7 +47,7 @@ initialModel d =
       , keys = initialKeysPressed
       , isMobile = d.isMobile
       , rand = ( 0, 0 )
-      , middlePos = { x = d.x, y = d.y }
+      , middleX = d.x + 80
       , touchDown = False
       , touchPos = newPosition 0 0
       }
@@ -64,7 +65,7 @@ type alias Model =
     , keys : KeysPressed
     , rand : ( Float, Float )
     , isMobile : Bool
-    , middlePos : Position
+    , middleX : Float
     , touchDown : Bool
     , touchPos : Position
     }
@@ -104,10 +105,10 @@ update msg model =
 
                 touch =
                     if model.touchDown then
-                        ( Just model.touchPos, model.middlePos )
+                        ( Just model.touchPos, model.middleX )
 
                     else
-                        ( Nothing, model.middlePos )
+                        ( Nothing, model.middleX )
             in
             ( { model
                 | gs = updateGameStateModelCall delta model.rand model.keys touch model.gs

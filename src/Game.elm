@@ -52,7 +52,7 @@ updateGameStateModelCall :
     Float
     -> ( Float, Float )
     -> KeysPressed
-    -> ( Maybe Position, Position )
+    -> ( Maybe Position, Float )
     -> GameState
     -> GameState
 updateGameStateModelCall delta randTuple keys touch gs =
@@ -109,7 +109,7 @@ updateGameState delta rand msg gs =
             }
 
 
-getGameMsgs : KeysPressed -> ( Maybe Position, Position ) -> Float -> GameState -> List GameMsg
+getGameMsgs : KeysPressed -> ( Maybe Position, Float ) -> Float -> GameState -> List GameMsg
 getGameMsgs keys touch rand gs =
     let
         keyCheckFunc kl =
@@ -135,8 +135,8 @@ getGameMsgs keys touch rand gs =
         ( Nothing, _ ) ->
             Nothing
 
-        ( Just pos, middlePos ) ->
-            if pos.x > middlePos.x then
+        ( Just pos, middleX ) ->
+            if pos.x > middleX then
                 Just Right
 
             else
