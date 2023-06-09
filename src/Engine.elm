@@ -42,8 +42,8 @@ keyDecoder m =
     Decode.map m (Decode.field "key" Decode.string)
 
 
-applyFuncToModelKeys : { m | keys : KeysPressed } -> (KeysPressed -> KeysPressed) -> { m | keys : KeysPressed }
-applyFuncToModelKeys model func =
+applyFuncToModelKeys : (KeysPressed -> KeysPressed) -> { m | keys : KeysPressed } -> { m | keys : KeysPressed }
+applyFuncToModelKeys func model =
     { model | keys = func model.keys }
 
 
@@ -207,7 +207,7 @@ getDistance pos1 pos2 =
     sqrt (dx * dx + dy * dy)
 
 
-viewEntity : String -> EntityBase -> Svg.Svg msg
+viewEntity : Image -> EntityBase -> Svg.Svg msg
 viewEntity img ent =
     let
         centeredPos =
@@ -356,5 +356,5 @@ lcgRandom seed =
 
 
 getRandomInRange : Float -> Float -> Float -> Float
-getRandomInRange seed min max =
-    lcgRandom seed * (max - min) + min
+getRandomInRange rand min max =
+    rand * (max - min) + min

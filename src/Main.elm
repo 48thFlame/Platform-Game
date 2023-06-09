@@ -10,7 +10,6 @@ import Html
 import Html.Attributes as HtmlA
 import Html.Events as HtmlEvents
 import Html.Events.Extra.Touch as Touch
-import Random
 import Svg
 import Svg.Attributes as SvgA
 
@@ -46,18 +45,13 @@ initialModel d =
       , gameStatus = Menu
       , keys = initialKeysPressed
       , isMobile = d.isMobile
-      , rand = 0
+      , rand = ( 0, 0 )
       , middlePos = { x = d.x, y = d.y }
-      , mousePressed = False
-      , mousePos = newPosition 0 0
+      , touchDown = False
+      , touchPos = newPosition 0 0
       }
-    , randCommand
+    , randCommand NewRandom
     )
-
-
-randCommand : Cmd Msg
-randCommand =
-    Random.generate NewRandom (Random.float 0 1)
 
 
 
@@ -68,12 +62,103 @@ type alias Model =
     { gs : GameState
     , gameStatus : GameStatus
     , keys : KeysPressed
-    , rand : Float
+    , rand : ( Float, Float )
     , isMobile : Bool
     , middlePos : Position
-    , mousePressed : Bool
-    , mousePos : Position
+    , touchDown : Bool
+    , touchPos : Position
     }
+
+
+
+-- UPDATE
+
+
+type Msg
+    = OnAnimationFrame Float
+    | KeyDown String
+    | KeyUp String
+    | ClickDown ( Float, Float )
+    | ClickMove ( Float, Float )
+    | ClickUp
+    | NewRandom ( Float, Float )
+    | Blur Events.Visibility
+    | PlayButton
+    | ToMenu
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        PlayButton ->
+            ( { model | gameStatus = Playing, gs = newGameState }, Cmd.none )
+
+        ToMenu ->
+            ( { model | gameStatus = Menu }, Cmd.none )
+
+        OnAnimationFrame deltaTime ->
+            -- main game loop
+            let
+                delta =
+                    deltaTime / 1000
+
+                touch =
+                    if model.touchDown then
+                        ( Just model.touchPos, model.middlePos )
+
+                    else
+                        ( Nothing, model.middlePos )
+            in
+            ( { model
+                | gs = updateGameStateModelCall delta model.rand model.keys touch model.gs
+                , gameStatus = getGameOverStatus model.gs
+              }
+            , randCommand NewRandom
+            )
+
+        NewRandom r ->
+            ( { model | rand = r }, Cmd.none )
+
+        KeyDown key ->
+            -- add key to model.keys
+            ( applyFuncToModelKeys (addKey key) model, Cmd.none )
+
+        KeyUp key ->
+            -- remove key from model.keys
+            ( applyFuncToModelKeys (removeKey key) model, Cmd.none )
+
+        ClickDown ( x, y ) ->
+            ( { model | touchDown = True, touchPos = newPosition x y }, Cmd.none )
+
+        ClickMove ( x, y ) ->
+            ( { model | touchPos = newPosition x y }, Cmd.none )
+
+        ClickUp ->
+            ( { model | touchDown = False }, Cmd.none )
+
+        Blur _ ->
+            -- clear model.keys
+            ( { model | touchDown = False } |> applyFuncToModelKeys clearKeys, Cmd.none )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        (case model.gameStatus of
+            Playing ->
+                [ Events.onAnimationFrameDelta OnAnimationFrame
+                , Events.onKeyDown (keyDecoder KeyDown)
+                , Events.onKeyUp (keyDecoder KeyUp)
+                , Events.onVisibilityChange Blur
+                ]
+
+            _ ->
+                [ Sub.none ]
+        )
 
 
 
@@ -143,102 +228,4 @@ view model =
                     , Html.p [ HtmlA.class "pDescription" ] [ Html.text "המשחק תוכנת על ידי ", Html.a [ HtmlA.class "pDescription", HtmlA.href "http://www.github.com/48thFlame" ] [ Html.text "אבישי" ] ]
                     ]
                 ]
-        )
-
-
-touchCoordinates : Touch.Event -> ( Float, Float )
-touchCoordinates touchEvent =
-    List.head touchEvent.changedTouches
-        |> Maybe.map .clientPos
-        |> Maybe.withDefault ( 0, 0 )
-
-
-
--- UPDATE
-
-
-type Msg
-    = OnAnimationFrame Float
-    | KeyDown String
-    | KeyUp String
-    | ClickDown ( Float, Float )
-    | ClickMove ( Float, Float )
-    | ClickUp
-    | NewRandom Float
-    | Blur Events.Visibility
-    | PlayButton
-    | ToMenu
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        PlayButton ->
-            ( { model | gameStatus = Playing, gs = newGameState }, Cmd.none )
-
-        ToMenu ->
-            ( { model | gameStatus = Menu }, Cmd.none )
-
-        OnAnimationFrame deltaTime ->
-            -- main game loop
-            let
-                delta =
-                    deltaTime / 1000
-
-                mouse =
-                    if model.mousePressed then
-                        ( Just model.mousePos, model.middlePos )
-
-                    else
-                        ( Nothing, model.middlePos )
-            in
-            ( { model
-                | gs = updateGameStateModelCall delta model.rand model.keys mouse model.gs
-                , gameStatus = getGameOverStatus model.gs
-              }
-            , randCommand
-            )
-
-        NewRandom r ->
-            ( { model | rand = r }, Cmd.none )
-
-        KeyDown key ->
-            -- add key to model.keys
-            ( applyFuncToModelKeys model (addKey key), Cmd.none )
-
-        KeyUp key ->
-            -- remove key from model.keys
-            ( applyFuncToModelKeys model (removeKey key), Cmd.none )
-
-        ClickDown ( x, y ) ->
-            ( { model | mousePressed = True, mousePos = newPosition x y }, Cmd.none )
-
-        ClickUp ->
-            ( { model | mousePressed = False }, Cmd.none )
-
-        ClickMove ( x, y ) ->
-            ( { model | mousePos = newPosition x y }, Cmd.none )
-
-        Blur _ ->
-            -- clear model.keys
-            ( applyFuncToModelKeys model clearKeys, Cmd.none )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        (case model.gameStatus of
-            Playing ->
-                [ Events.onAnimationFrameDelta OnAnimationFrame
-                , Events.onKeyDown (keyDecoder KeyDown)
-                , Events.onKeyUp (keyDecoder KeyUp)
-                , Events.onVisibilityChange Blur
-                ]
-
-            _ ->
-                [ Sub.none ]
         )
