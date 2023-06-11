@@ -15,6 +15,46 @@ body {
     position: relative;
 }
 
+.menu {
+    display: grid;
+    height: 100%;
+    grid-template-rows: 25% 72% 3%;
+}
+
+/* .menuTopSection {
+} */
+
+.menuMiddleSection {
+    display: grid;
+    grid-template-rows: 15% 10% 75%;
+}
+
+.playerSelection {
+    display: grid;
+    grid-template-columns: 15% 70% 15%;
+}
+
+.playerSelectButton {
+    font-size: 8vh;
+    margin: 5%;
+}
+
+.playerSelectShow {
+    display: flex;
+}
+
+.playerSelectShowImg {
+    /* width: 98%; */
+    margin-left: 1%;
+    margin-right: 1%;
+    /* margin-top: auto; */
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+
+/* .menuBottomSection {
+} */
+
 .canvasContainer {
     display: grid;
 }
@@ -35,10 +75,11 @@ body {
 }
 
 .controlButton {
-    color: rgb(31, 31, 31);
-    border: #0a4e57 3px solid;
-    background-color: whitesmoke;
+    color: whitesmoke;
+    border: rgb(31, 31, 31) 3px solid;
+    background-color: #3a828b;
     font-size: 3vh;
+    margin: 2.5%;
 }
 
 .title {
@@ -55,6 +96,5 @@ body {
 
 .subTitle {
     font-size: 3vh;
+    margin: 1.5%;
 }
-
-/* .controlContainer {} */

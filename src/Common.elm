@@ -2,12 +2,35 @@ module Common exposing (..)
 
 import Constants exposing (..)
 import Engine exposing (..)
+import Html.Events.Extra.Touch as Touch
+import Random
+
+
+randCommand : (( Float, Float ) -> msg) -> Cmd msg
+randCommand m =
+    let
+        gen =
+            Random.float 0 1
+    in
+    Random.generate m (Random.pair gen gen)
+
+
+touchCoordinates : Touch.Event -> ( Float, Float )
+touchCoordinates touchEvent =
+    List.head touchEvent.changedTouches
+        |> Maybe.map .clientPos
+        |> Maybe.withDefault ( 0, 0 )
 
 
 type GameStatus
     = Menu
     | Playing
     | GameOver
+
+
+playerSrc : Int -> String
+playerSrc i =
+    "assets/player" ++ String.fromInt i ++ ".png"
 
 
 difficultyIncrease : Int -> Float
@@ -17,14 +40,10 @@ difficultyIncrease score =
             score |> toFloat
 
         i =
-            sqrt fs
-                ^ 1.8
+            sqrt (2.5 * fs)
+                ^ 1.3
     in
     i
-
-
-
--- difficultyIncrease score
 
 
 borderColliders : List EntityBase

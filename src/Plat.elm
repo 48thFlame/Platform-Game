@@ -36,3 +36,17 @@ platformsAnimationFrame delta score platforms =
             firstLen - secondLen
     in
     ( filtered, scoreIncrease )
+
+
+shouldNewPlatform : Float -> List Platform -> Bool
+shouldNewPlatform rand l =
+    case List.head l of
+        Nothing ->
+            True
+
+        Just p ->
+            let
+                py =
+                    p.pos.y
+            in
+            rand > platformS.divToNew / py

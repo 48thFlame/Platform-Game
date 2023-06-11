@@ -5,10 +5,6 @@ import Constants exposing (..)
 import Engine exposing (..)
 
 
-
--- import Svg
-
-
 newPlayer : Player
 newPlayer =
     { eb =
@@ -26,54 +22,24 @@ type alias Player =
     }
 
 
-{-| Respond to `SpaceBar` `GameMsg`
+{-| Move player to a side,
+`right` - a bool saying whether should go right, leave False to go left
 -}
-playerUp : List EntityBase -> Player -> Player
-playerUp colliders plr =
-    let
-        -- {-| checks whether plr can jump - touching ground or something
-        -- -}
-        playerCanJump : Bool
-        playerCanJump =
-            List.any (isCollided (actAction 1 (MoveUpDown plrS.jumpCheckBuffer) plr.eb)) colliders
-
-        vel =
-            plr.vel
-
-        newVel =
-            { vel | dy = -plrS.jumpStrength }
-    in
-    if playerCanJump then
-        { plr | vel = newVel }
-
-    else
-        plr
-
-
-{-| Pressed right going key
--}
-playerRight : Player -> Player
-playerRight plr =
+playerSide : Bool -> Player -> Player
+playerSide right plr =
     let
         vel =
             plr.vel
 
-        newVel =
-            { vel | dx = plrS.leftRightStrength }
-    in
-    { plr | vel = newVel }
+        sign =
+            if right then
+                1
 
-
-{-| Pressed left going key
--}
-playerLeft : Player -> Player
-playerLeft plr =
-    let
-        vel =
-            plr.vel
+            else
+                -1
 
         newVel =
-            { vel | dx = -plrS.leftRightStrength }
+            { vel | dx = plrS.leftRightStrength * sign }
     in
     { plr | vel = newVel }
 
@@ -96,13 +62,6 @@ playerActActionSafely delta actionValue actionType colliders plr =
             actAction delta (actionType actionValue) eb
 
         newPlr =
-            {- if new eb doesn't collide then is safe,
-               BUT if old one already collides
-                   => then stuck in block => need to allow to move,
-               ELSE not safe to not do action!&& not (List.any (isCollided eb) colliders)
-
-               ! not sure the status of this comment
-            -}
             if List.any (isCollided tempEb) colliders then
                 case actionType actionValue of
                     MoveUpDown _ ->
@@ -111,10 +70,23 @@ playerActActionSafely delta actionValue actionType colliders plr =
                                 plr.vel
                         in
                         if vel.dy > 0 then
-                            -- if moving up down fix dumb issue where freezes in the air
-                            { plr | vel = { vel | dy = 0 } }
+                            -- if falling and collided - JUMP!
+                            { plr | vel = { vel | dy = -plrS.jumpStrength } }
 
-                        else if vel.dy < 0 then
+                        else
+                            --if vel.dy < 0 then
+                            { plr | eb = tempEb }
+
+                    MoveLeftRight _ ->
+                        let
+                            pos =
+                                tempEb.pos
+
+                            width =
+                                tempEb.dim.width
+                        in
+                        if pos.x > 0 && (pos.x + width) < canvasS.w then
+                            -- if inbounds then not going outside then can allow to go threw platforms
                             { plr | eb = tempEb }
 
                         else
@@ -141,13 +113,9 @@ playerUpdateVel delta plr =
         newDy =
             let
                 value =
-                    vel.dy + (plrS.gravityStrength {- + ddyIncrease score -}) * delta
+                    vel.dy + plrS.gravityStrength * delta
             in
-            if value >= plrS.maxDy then
-                plrS.maxDy
-
-            else
-                value
+            value
 
         newDx =
             let
@@ -163,8 +131,6 @@ playerUpdateVel delta plr =
 
                 nDx =
                     value - plrS.frictionStrength
-
-                -- * delta
             in
             if nDx > 0 then
                 nDx * sign
