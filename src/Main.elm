@@ -34,7 +34,6 @@ main =
 
 type alias Flags =
     { x : Float
-    , isMobile : Bool
     }
 
 
@@ -44,7 +43,6 @@ initialModel d =
       , player = 1
       , gameStatus = Menu
       , keys = initialKeysPressed
-      , isMobile = d.isMobile
       , rand = ( 0, 0 )
       , middleX = d.x + 80
       , touchDown = False
@@ -64,7 +62,6 @@ type alias Model =
     , gameStatus : GameStatus
     , keys : KeysPressed
     , rand : ( Float, Float )
-    , isMobile : Bool
     , middleX : Float
     , touchDown : Bool
     , touchPos : Position
@@ -207,21 +204,7 @@ view model =
                     , Touch.onMove (ClickMove << touchCoordinates)
                     , Touch.onEnd (\_ -> ClickUp)
                     ]
-                    (if model.isMobile then
-                        [ Svg.g [ SvgA.class "mobileExp" ]
-                            [ viewEntity
-                                "assets/mobileBackground.png"
-                                { pos = newPosition 0 0
-                                , dim = newDimension canvasS.w canvasS.h
-                                , rot = initialRotation
-                                }
-                            ]
-                        , canvas
-                        ]
-
-                     else
-                        [ canvas ]
-                    )
+                    [ canvas ]
                 ]
 
             GameOver ->
