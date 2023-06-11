@@ -28,6 +28,11 @@ type GameStatus
     | GameOver
 
 
+playerSrc : Int -> String
+playerSrc i =
+    "assets/player" ++ String.fromInt i ++ ".png"
+
+
 difficultyIncrease : Int -> Float
 difficultyIncrease score =
     let

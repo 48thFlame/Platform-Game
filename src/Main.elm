@@ -34,8 +34,6 @@ main =
 
 type alias Flags =
     { x : Float
-
-    -- , y : Float
     , isMobile : Bool
     }
 
@@ -43,6 +41,7 @@ type alias Flags =
 initialModel : Flags -> ( Model, Cmd Msg )
 initialModel d =
     ( { gs = newGameState
+      , player = 1
       , gameStatus = Menu
       , keys = initialKeysPressed
       , isMobile = d.isMobile
@@ -61,6 +60,7 @@ initialModel d =
 
 type alias Model =
     { gs : GameState
+    , player : Int
     , gameStatus : GameStatus
     , keys : KeysPressed
     , rand : ( Float, Float )
@@ -77,6 +77,8 @@ type alias Model =
 
 type Msg
     = OnAnimationFrame Float
+    | PlayerSelectLeft
+    | PlayerSelectRight
     | KeyDown String
     | KeyUp String
     | ClickDown ( Float, Float )
@@ -86,6 +88,18 @@ type Msg
     | Blur Events.Visibility
     | PlayButton
     | ToMenu
+
+
+changePlayerSelect : Int -> Int
+changePlayerSelect try =
+    if try > plrS.maxSel then
+        1
+
+    else if try < 1 then
+        plrS.maxSel
+
+    else
+        try
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -116,6 +130,12 @@ update msg model =
               }
             , randCommand NewRandom
             )
+
+        PlayerSelectLeft ->
+            ( { model | player = changePlayerSelect (model.player + 1) }, Cmd.none )
+
+        PlayerSelectRight ->
+            ( { model | player = changePlayerSelect (model.player - 1) }, Cmd.none )
 
         NewRandom r ->
             ( { model | rand = r }, Cmd.none )
@@ -177,7 +197,7 @@ view model =
                         Svg.g
                             [ SvgA.class "canvas"
                             ]
-                            [ viewGameState model.gs
+                            [ viewGameState (playerSrc model.player) model.gs
                             ]
                 in
                 [ Svg.svg
@@ -215,18 +235,55 @@ view model =
                 ]
 
             Menu ->
-                [ Html.h1 [ HtmlA.class "title" ] [ Html.text "ברוכים הבאים למשחק!" ]
-                , Html.div [ HtmlA.class "controlContainer" ]
-                    [ Html.button [ HtmlEvents.onClick PlayButton, HtmlA.class "controlButton" ] [ Html.text "שחק" ]
-                    , Html.br [] []
-                    , Html.br [] []
-                    , Html.h3 [ HtmlA.class "subTitle" ] [ Html.text "הסבר:" ]
-                    , Html.p
-                        [ HtmlA.class "pDescription"
+                [ Html.div [ HtmlA.class "menu" ]
+                    [ Html.div [ HtmlA.class "menuTopSection" ]
+                        [ Html.h1
+                            [ HtmlA.class "title" ]
+                            [ Html.text "ברוכים הבאים למשחק!" ]
                         ]
-                        [ Html.text "קפוץ מפלטפורמה לפלטפורמה והימנע ממגע בלבה."
+                    , Html.div
+                        [ HtmlA.class "menuMiddleSection" ]
+                        [ Html.div []
+                            [ Html.h3
+                                [ HtmlA.class "subTitle" ]
+                                [ Html.text "הסבר:" ]
+                            , Html.p
+                                [ HtmlA.class "pDescription"
+                                ]
+                                [ Html.text "קפוץ מפלטפורמה לפלטפורמה והימנע ממגע בלבה המגיעה מהרצפה."
+                                ]
+                            ]
+                        , Html.div []
+                            [ Html.button
+                                [ HtmlEvents.onClick PlayButton, HtmlA.class "controlButton" ]
+                                [ Html.text "שחק" ]
+                            ]
+                        , Html.div [ HtmlA.class "playerSelection" ]
+                            [ Html.button
+                                [ HtmlA.class "playerSelectButton", HtmlEvents.onClick PlayerSelectLeft ]
+                                [ Html.text "<" ]
+                            , Html.div
+                                [ HtmlA.class "playerSelectShow" ]
+                                [ Html.img
+                                    [ HtmlA.class "playerSelectShowImg", HtmlA.src (playerSrc model.player) ]
+                                    []
+                                ]
+                            , Html.button
+                                [ HtmlA.class "playerSelectButton", HtmlEvents.onClick PlayerSelectRight ]
+                                [ Html.text ">" ]
+                            ]
                         ]
-                    , Html.p [ HtmlA.class "pDescription" ] [ Html.text "המשחק תוכנת על ידי ", Html.a [ HtmlA.class "pDescription", HtmlA.href "http://www.github.com/48thFlame" ] [ Html.text "אבישי" ] ]
+                    , Html.div [ HtmlA.class "menuBottomSection" ]
+                        [ Html.p
+                            [ HtmlA.class "pDescription" ]
+                            [ Html.text "המשחק תוכנת על ידי "
+                            , Html.a
+                                [ HtmlA.class "pDescription"
+                                , HtmlA.href "http://www.github.com/48thFlame"
+                                ]
+                                [ Html.text "אבישי" ]
+                            ]
+                        ]
                     ]
                 ]
         )

@@ -12,6 +12,7 @@ plrS =
     , leftRightStrength = 144
     , w = 9
     , h = 12
+    , maxSel = 5
     }
 
 

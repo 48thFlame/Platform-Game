@@ -151,12 +151,12 @@ getGameMsgs keys touch rand gs =
 -- VIEW
 
 
-viewGameState : GameState -> Svg.Svg msg
-viewGameState gs =
+viewGameState : Image -> GameState -> Svg.Svg msg
+viewGameState playerSrc gs =
     Svg.g
         []
         [ viewEntity "assets/lava.png" gs.lava
-        , viewEntity "assets/player.png" gs.player.eb
+        , viewEntity playerSrc gs.player.eb
         , Svg.g [] (List.map (viewEntity "assets/platform.png") gs.platforms)
         , Svg.text_ [ SvgA.x "7", SvgA.y "20" ] [ Svg.text (String.fromInt gs.score) ]
         ]
