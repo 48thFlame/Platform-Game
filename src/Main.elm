@@ -103,7 +103,14 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         PlayButton ->
-            ( { model | gameStatus = Playing, gs = newGameState }, Cmd.none )
+            ( { model
+                | gameStatus = Playing
+                , gs = newGameState
+                , keys = initialKeysPressed
+                , touchDown = False
+              }
+            , Cmd.none
+            )
 
         ToMenu ->
             ( { model | gameStatus = Menu }, Cmd.none )
