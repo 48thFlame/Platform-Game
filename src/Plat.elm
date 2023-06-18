@@ -1,7 +1,6 @@
 module Plat exposing (..)
 
 import Common exposing (..)
-import Constants exposing (..)
 import Engine exposing (..)
 
 
@@ -17,25 +16,22 @@ type alias Platform =
     EntityBase
 
 
-platformsAnimationFrame : Float -> Int -> List Platform -> ( List Platform, Int )
-platformsAnimationFrame delta score platforms =
+platformsAnimationFrame : Float -> Float -> List Platform -> List Platform
+platformsAnimationFrame delta diffIncrease platforms =
     let
-        firstLen =
-            List.length platforms
+        deadsRemoved =
+            if bottomPlatShouldDie platforms then
+                List.reverse platforms |> List.drop 1 |> List.reverse
+
+            else
+                platforms
 
         movedDown =
-            List.map (actAction delta (MoveUpDown (platformS.speed + difficultyIncrease score))) platforms
-
-        filtered =
-            List.filter (\p -> p.pos.y < canvasS.h) movedDown
-
-        secondLen =
-            List.length filtered
-
-        scoreIncrease =
-            firstLen - secondLen
+            List.map
+                (actAction delta (MoveUpDown (platformS.speed + diffIncrease)))
+                deadsRemoved
     in
-    ( filtered, scoreIncrease )
+    movedDown
 
 
 shouldNewPlatform : Float -> List Platform -> Bool
@@ -50,3 +46,21 @@ shouldNewPlatform rand l =
                     p.pos.y
             in
             rand > platformS.divToNew / py
+
+
+bottomPlatShouldDie : List Platform -> Bool
+bottomPlatShouldDie l =
+    let
+        bottomPlatform =
+            List.reverse l |> List.head
+    in
+    case bottomPlatform of
+        Nothing ->
+            False
+
+        Just p ->
+            if p.pos.y > canvasS.h then
+                True
+
+            else
+                False

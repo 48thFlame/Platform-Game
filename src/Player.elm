@@ -1,7 +1,6 @@
 module Player exposing (..)
 
 import Common exposing (..)
-import Constants exposing (..)
 import Engine exposing (..)
 
 
@@ -44,6 +43,15 @@ playerSide right plr =
     { plr | vel = newVel }
 
 
+playerJump : Player -> Player
+playerJump plr =
+    let
+        vel =
+            plr.vel
+    in
+    { plr | vel = { vel | dy = -plrS.jumpStrength } }
+
+
 {-| `actAction` and make sure good - not out of bounds
 -}
 playerActActionSafely :
@@ -65,17 +73,16 @@ playerActActionSafely delta actionValue actionType colliders plr =
             if List.any (isCollided tempEb) colliders then
                 case actionType actionValue of
                     MoveUpDown _ ->
-                        let
-                            vel =
-                                plr.vel
-                        in
-                        if vel.dy > 0 then
-                            -- if falling and collided - JUMP!
-                            { plr | vel = { vel | dy = -plrS.jumpStrength } }
-
-                        else
-                            --if vel.dy < 0 then
-                            { plr | eb = tempEb }
+                        -- let
+                        --     vel =
+                        --         plr.vel
+                        -- in
+                        -- if vel.dy > 0 then
+                        --     -- if falling and collided - JUMP!
+                        --     { plr | vel = { vel | dy = -plrS.jumpStrength } }
+                        -- else
+                        --if vel.dy < 0 then
+                        { plr | eb = tempEb }
 
                     MoveLeftRight _ ->
                         let
@@ -152,13 +159,22 @@ playerUpdateVel delta plr =
 -}
 playerAnimationFrame : Float -> List EntityBase -> Player -> Player
 playerAnimationFrame delta colliders plr =
-    playerActActionSafely delta
-        plr.vel.dy
-        MoveUpDown
-        colliders
-        plr
-        |> playerActActionSafely delta
-            plr.vel.dx
-            MoveLeftRight
-            colliders
-        |> playerUpdateVel delta
+    let
+        plrLeftRightMoved =
+            playerActActionSafely delta
+                plr.vel.dx
+                MoveLeftRight
+                colliders
+                plr
+
+        plrUpDownMoved =
+            playerActActionSafely delta
+                plr.vel.dy
+                MoveUpDown
+                colliders
+                plrLeftRightMoved
+
+        plrVelUpd =
+            playerUpdateVel delta plrUpDownMoved
+    in
+    plrVelUpd

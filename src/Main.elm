@@ -3,7 +3,6 @@ module Main exposing (main)
 import Browser
 import Browser.Events as Events
 import Common exposing (..)
-import Constants exposing (..)
 import Engine exposing (..)
 import Game exposing (..)
 import Html
@@ -103,7 +102,14 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         PlayButton ->
-            ( { model | gameStatus = Playing, gs = newGameState }, Cmd.none )
+            ( { model
+                | gameStatus = Playing
+                , gs = newGameState
+                , keys = initialKeysPressed
+                , touchDown = False
+              }
+            , Cmd.none
+            )
 
         ToMenu ->
             ( { model | gameStatus = Menu }, Cmd.none )
@@ -120,12 +126,20 @@ update msg model =
 
                     else
                         ( Nothing, model.middleX )
+
+                gsUpdCall =
+                    updateGameStateModelCall
+                        delta
+                        model.rand
+                        model.keys
+                        touch
+                        model.gs
             in
             ( { model
-                | gs = updateGameStateModelCall delta model.rand model.keys touch model.gs
+                | gs = Tuple.first gsUpdCall
                 , gameStatus = getGameOverStatus model.gs
               }
-            , randCommand NewRandom
+            , Cmd.batch (randCommand NewRandom :: Tuple.second gsUpdCall)
             )
 
         PlayerSelectLeft ->

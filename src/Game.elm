@@ -1,7 +1,6 @@
 module Game exposing (..)
 
 import Common exposing (..)
-import Constants exposing (..)
 import Engine exposing (..)
 import Lava exposing (..)
 import Plat exposing (..)
@@ -28,6 +27,7 @@ newGameState =
     { player = newPlayer
     , platforms = []
     , score = 0
+    , background = 0
     , lava = newLava
     }
 
@@ -40,12 +40,20 @@ type alias GameState =
     { player : Player
     , platforms : List Platform
     , lava : EntityBase
+    , background : Int
     , score : Int
     }
 
 
 
 -- UPDATE
+-- difficultyIncrease : Int -> Float
+-- difficultyIncrease i =
+--     let
+--         x =
+--             toFloat i
+--     in
+--     sqrt (0.00001 * x)
 
 
 updateGameStateModelCall :
@@ -54,19 +62,31 @@ updateGameStateModelCall :
     -> KeysPressed
     -> ( Maybe Position, Float )
     -> GameState
-    -> GameState
+    -> ( GameState, List (Cmd msg) )
 updateGameStateModelCall delta randTuple keys touch gs =
-    List.foldl
+    let
+        msgs =
+            getGameMsgs keys touch (Tuple.second randTuple) delta gs
+
+        -- difficultyIncreasedDelta =
+        --     delta + difficultyIncrease gs.score |> Debug.log "delta"
+    in
+    ( List.foldl
         (updateGameState delta (Tuple.first randTuple))
         gs
-        (getGameMsgs keys touch (Tuple.second randTuple) gs)
+        msgs
+    , getCmds gs msgs
+    )
 
 
 type GameMsg
     = AnimationFrame
     | Right
     | Left
+    | Jump
     | NewPlatform
+    | ScoreIncrease
+    | ChangeBackground
 
 
 updateGameState : Float -> Float -> GameMsg -> GameState -> GameState
@@ -77,27 +97,36 @@ updateGameState delta rand msg gs =
                 colliders =
                     gs.platforms ++ borderColliders
 
+                diffIncrease =
+                    difficultyIncrease gs.score
+
                 platformUpdate =
-                    platformsAnimationFrame delta gs.score gs.platforms
-
-                newPlatforms =
-                    Tuple.first platformUpdate
-
-                scoreIncrease =
-                    Tuple.second platformUpdate
+                    platformsAnimationFrame delta diffIncrease gs.platforms
             in
             { gs
                 | player = playerAnimationFrame delta colliders gs.player
-                , platforms = newPlatforms
+                , platforms = platformUpdate
                 , lava = updateLava gs.score gs.lava
-                , score = gs.score + scoreIncrease
             }
+
+        ScoreIncrease ->
+            { gs | score = gs.score + 1 }
+
+        ChangeBackground ->
+            if gs.background < backS.max then
+                { gs | background = gs.background + 1 }
+
+            else
+                gs
 
         Right ->
             { gs | player = playerSide True gs.player }
 
         Left ->
             { gs | player = playerSide False gs.player }
+
+        Jump ->
+            { gs | player = playerJump gs.player }
 
         NewPlatform ->
             { gs
@@ -109,13 +138,78 @@ updateGameState delta rand msg gs =
             }
 
 
-getGameMsgs : KeysPressed -> ( Maybe Position, Float ) -> Float -> GameState -> List GameMsg
-getGameMsgs keys touch rand gs =
+getCmds : GameState -> List GameMsg -> List (Cmd msg)
+getCmds gs gm =
+    let
+        newScore =
+            gs.score + 1
+    in
+    [ if List.member ScoreIncrease gm then
+        if modBy 10 newScore == 0 then
+            soundBigScore
+
+        else
+            soundScoreUp
+
+      else
+        Cmd.none
+    , if List.member ChangeBackground gm then
+        soundFire
+
+      else
+        Cmd.none
+    ]
+
+
+getGameMsgs :
+    KeysPressed
+    -> ( Maybe Position, Float )
+    -> Float
+    -> Float
+    -> GameState
+    -> List GameMsg
+getGameMsgs keys touch rand delta gs =
     let
         keyCheckFunc kl =
             List.any (isPressed keys) kl
+
+        colliders =
+            gs.platforms ++ borderColliders
+
+        plrJumpedCheck =
+            let
+                plr =
+                    gs.player
+
+                eb =
+                    plr.eb
+
+                vel =
+                    plr.vel
+
+                plrJumped =
+                    actAction delta (MoveUpDown vel.dy) eb
+            in
+            List.any (isCollided plrJumped) colliders
+
+        shouldScoreUp =
+            bottomPlatShouldDie gs.platforms
     in
-    [ Just AnimationFrame
+    [ if shouldScoreUp then
+        Just ScoreIncrease
+
+      else
+        Nothing
+    , if shouldScoreUp && modBy backS.changeNum (gs.score + 1) == 0 then
+        Just ChangeBackground
+
+      else
+        Nothing
+    , if plrJumpedCheck then
+        Just Jump
+
+      else
+        Nothing
     , if shouldNewPlatform rand gs.platforms then
         Just NewPlatform
 
@@ -142,6 +236,7 @@ getGameMsgs keys touch rand gs =
             else
                 --  if pos.x < middlePos.x then
                 Just Left
+    , Just AnimationFrame
     ]
         -- convert maybe to just value by dropping `Nothing`
         |> List.filterMap identity
@@ -151,11 +246,27 @@ getGameMsgs keys touch rand gs =
 -- VIEW
 
 
+displayBackground : Int -> Svg.Svg msg
+displayBackground i =
+    let
+        path =
+            "assets/background" ++ String.fromInt i ++ ".png"
+
+        ent =
+            { pos = newPosition 0 0
+            , dim = newDimension canvasS.w canvasS.h
+            , rot = initialRotation
+            }
+    in
+    Svg.g [ SvgA.opacity "0.4" ] [ viewEntity path ent ]
+
+
 viewGameState : Image -> GameState -> Svg.Svg msg
 viewGameState playerSrc gs =
     Svg.g
         []
-        [ viewEntity "assets/lava.png" gs.lava
+        [ displayBackground gs.background
+        , viewEntity "assets/lava.png" gs.lava
         , viewEntity playerSrc gs.player.eb
         , Svg.g [] (List.map (viewEntity "assets/platform.png") gs.platforms)
         , Svg.text_ [ SvgA.x "7", SvgA.y "20" ] [ Svg.text (String.fromInt gs.score) ]
