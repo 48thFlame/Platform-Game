@@ -11,7 +11,7 @@ canvasS =
 
 plrS =
     { gravityStrength = 1097
-    , jumpStrength = 310
+    , jumpStrength = 320
     , frictionStrength = 2000
     , leftRightStrength = 144
     , w = 9
@@ -35,7 +35,7 @@ platformS =
 
 
 backS =
-    { changeNum = 40, max = 8 }
+    { changeNum = 50, max = 8 }
 
 
 rightKeys =
