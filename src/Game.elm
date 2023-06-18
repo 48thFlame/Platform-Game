@@ -27,6 +27,7 @@ newGameState =
     { player = newPlayer
     , platforms = []
     , score = 0
+    , background = 0
     , lava = newLava
     }
 
@@ -39,6 +40,7 @@ type alias GameState =
     { player : Player
     , platforms : List Platform
     , lava : EntityBase
+    , background : Int
     , score : Int
     }
 
@@ -74,6 +76,7 @@ type GameMsg
     | Jump
     | NewPlatform
     | ScoreIncrease
+    | ChangeBackground
 
 
 updateGameState : Float -> Float -> GameMsg -> GameState -> GameState
@@ -95,6 +98,13 @@ updateGameState delta rand msg gs =
 
         ScoreIncrease ->
             { gs | score = gs.score + 1 }
+
+        ChangeBackground ->
+            if gs.background < backS.max then
+                { gs | background = gs.background + 1 }
+
+            else
+                gs
 
         Right ->
             { gs | player = playerSide True gs.player }
@@ -118,22 +128,20 @@ updateGameState delta rand msg gs =
 getCmds : GameState -> List GameMsg -> List (Cmd msg)
 getCmds gs gm =
     let
-        sm1 =
+        newScore =
             gs.score + 1
     in
     [ if List.member ScoreIncrease gm then
-        Cmd.batch
-            [ if modBy 50 sm1 == 0 then
-                soundFire
+        if modBy 10 newScore == 0 then
+            soundBigScore
 
-              else
-                Cmd.none
-            , if modBy 10 sm1 == 0 then
-                soundBigScore
+        else
+            soundScoreUp
 
-              else
-                soundScoreUp
-            ]
+      else
+        Cmd.none
+    , if List.member ChangeBackground gm then
+        soundFire
 
       else
         Cmd.none
@@ -170,9 +178,17 @@ getGameMsgs keys touch rand delta gs =
                     actAction delta (MoveUpDown vel.dy) eb
             in
             List.any (isCollided plrJumped) colliders
+
+        shouldScoreUp =
+            bottomPlatShouldDie gs.platforms
     in
-    [ if bottomPlatShouldDie gs.platforms then
+    [ if shouldScoreUp then
         Just ScoreIncrease
+
+      else
+        Nothing
+    , if shouldScoreUp && modBy backS.changeNum (gs.score + 1) == 0 then
+        Just ChangeBackground
 
       else
         Nothing
@@ -217,11 +233,27 @@ getGameMsgs keys touch rand delta gs =
 -- VIEW
 
 
+displayBackground : Int -> Svg.Svg msg
+displayBackground i =
+    let
+        path =
+            "assets/background" ++ String.fromInt i ++ ".png"
+
+        ent =
+            { pos = newPosition 0 0
+            , dim = newDimension canvasS.w canvasS.h
+            , rot = initialRotation
+            }
+    in
+    Svg.g [ SvgA.opacity "0.4" ] [ viewEntity path ent ]
+
+
 viewGameState : Image -> GameState -> Svg.Svg msg
 viewGameState playerSrc gs =
     Svg.g
         []
-        [ viewEntity "assets/lava.png" gs.lava
+        [ displayBackground gs.background
+        , viewEntity "assets/lava.png" gs.lava
         , viewEntity playerSrc gs.player.eb
         , Svg.g [] (List.map (viewEntity "assets/platform.png") gs.platforms)
         , Svg.text_ [ SvgA.x "7", SvgA.y "20" ] [ Svg.text (String.fromInt gs.score) ]

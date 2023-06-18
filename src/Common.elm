@@ -30,10 +30,12 @@ platformS =
     , newYA = 50
     , newYB = 55
     , speed = 50
-
-    -- , speed = 100
     , divToNew = 22
     }
+
+
+backS =
+    { changeNum = 40, max = 8 }
 
 
 rightKeys =
