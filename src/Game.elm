@@ -1,7 +1,6 @@
 module Game exposing (..)
 
 import Common exposing (..)
-import Constants exposing (..)
 import Engine exposing (..)
 import Lava exposing (..)
 import Plat exposing (..)
@@ -54,19 +53,27 @@ updateGameStateModelCall :
     -> KeysPressed
     -> ( Maybe Position, Float )
     -> GameState
-    -> GameState
+    -> ( GameState, List (Cmd msg) )
 updateGameStateModelCall delta randTuple keys touch gs =
-    List.foldl
+    let
+        msgs =
+            getGameMsgs keys touch (Tuple.second randTuple) delta gs
+    in
+    ( List.foldl
         (updateGameState delta (Tuple.first randTuple))
         gs
-        (getGameMsgs keys touch (Tuple.second randTuple) gs)
+        msgs
+    , getCmds gs msgs
+    )
 
 
 type GameMsg
     = AnimationFrame
     | Right
     | Left
+    | Jump
     | NewPlatform
+    | ScoreIncrease
 
 
 updateGameState : Float -> Float -> GameMsg -> GameState -> GameState
@@ -78,26 +85,25 @@ updateGameState delta rand msg gs =
                     gs.platforms ++ borderColliders
 
                 platformUpdate =
-                    platformsAnimationFrame delta gs.score gs.platforms
-
-                newPlatforms =
-                    Tuple.first platformUpdate
-
-                scoreIncrease =
-                    Tuple.second platformUpdate
+                    platformsAnimationFrame delta gs.platforms
             in
             { gs
                 | player = playerAnimationFrame delta colliders gs.player
-                , platforms = newPlatforms
+                , platforms = platformUpdate
                 , lava = updateLava gs.score gs.lava
-                , score = gs.score + scoreIncrease
             }
+
+        ScoreIncrease ->
+            { gs | score = gs.score + 1 }
 
         Right ->
             { gs | player = playerSide True gs.player }
 
         Left ->
             { gs | player = playerSide False gs.player }
+
+        Jump ->
+            { gs | player = playerJump gs.player }
 
         NewPlatform ->
             { gs
@@ -109,13 +115,72 @@ updateGameState delta rand msg gs =
             }
 
 
-getGameMsgs : KeysPressed -> ( Maybe Position, Float ) -> Float -> GameState -> List GameMsg
-getGameMsgs keys touch rand gs =
+getCmds : GameState -> List GameMsg -> List (Cmd msg)
+getCmds gs gm =
+    let
+        sm1 =
+            gs.score + 1
+    in
+    [ if List.member ScoreIncrease gm then
+        Cmd.batch
+            [ if modBy 50 sm1 == 0 then
+                soundFire
+
+              else
+                Cmd.none
+            , if modBy 10 sm1 == 0 then
+                soundBigScore
+
+              else
+                soundScoreUp
+            ]
+
+      else
+        Cmd.none
+    ]
+
+
+getGameMsgs :
+    KeysPressed
+    -> ( Maybe Position, Float )
+    -> Float
+    -> Float
+    -> GameState
+    -> List GameMsg
+getGameMsgs keys touch rand delta gs =
     let
         keyCheckFunc kl =
             List.any (isPressed keys) kl
+
+        colliders =
+            gs.platforms ++ borderColliders
+
+        plrJumpedCheck =
+            let
+                plr =
+                    gs.player
+
+                eb =
+                    plr.eb
+
+                vel =
+                    plr.vel
+
+                plrJumped =
+                    actAction delta (MoveUpDown vel.dy) eb
+            in
+            List.any (isCollided plrJumped) colliders
     in
-    [ Just AnimationFrame
+    [ if bottomPlatShouldDie gs.platforms then
+        Just ScoreIncrease
+
+      else
+        Nothing
+    , if plrJumpedCheck then
+        Just Jump
+
+      else
+        Nothing
     , if shouldNewPlatform rand gs.platforms then
         Just NewPlatform
 
@@ -142,6 +207,7 @@ getGameMsgs keys touch rand gs =
             else
                 --  if pos.x < middlePos.x then
                 Just Left
+    , Just AnimationFrame
     ]
         -- convert maybe to just value by dropping `Nothing`
         |> List.filterMap identity

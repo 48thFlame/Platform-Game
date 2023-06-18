@@ -1,7 +1,6 @@
 module Lava exposing (..)
 
 import Common exposing (..)
-import Constants exposing (..)
 import Engine exposing (..)
 
 
@@ -19,4 +18,4 @@ updateLava score lava =
         pos =
             lava.pos
     in
-    { lava | pos = { pos | y = lavaS.startingY - difficultyIncrease score } }
+    { lava | pos = { pos | y = lavaS.startingY - (sqrt <| toFloat score) } }

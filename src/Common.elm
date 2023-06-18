@@ -1,9 +1,47 @@
-module Common exposing (..)
+port module Common exposing (..)
 
-import Constants exposing (..)
 import Engine exposing (..)
 import Html.Events.Extra.Touch as Touch
 import Random
+
+
+canvasS =
+    { w = 120, sw = "120", h = 280, sh = "280" }
+
+
+plrS =
+    { gravityStrength = 970
+    , jumpStrength = 310
+    , frictionStrength = 2000
+    , leftRightStrength = 144
+    , w = 9
+    , h = 12
+    , maxSel = 5
+    }
+
+
+lavaS =
+    { startingY = canvasS.h + 1 }
+
+
+platformS =
+    { w = 24
+    , h = 6
+    , newYA = 50
+    , newYB = 55
+    , speed = 50
+
+    -- , speed = 100
+    , divToNew = 22
+    }
+
+
+rightKeys =
+    [ "ArrowRight", "d", "D", "ג" ]
+
+
+leftKeys =
+    [ "ArrowLeft", "a", "A", "ש" ]
 
 
 randCommand : (( Float, Float ) -> msg) -> Cmd msg
@@ -13,6 +51,24 @@ randCommand m =
             Random.float 0 1
     in
     Random.generate m (Random.pair gen gen)
+
+
+port playSound : String -> Cmd msg
+
+
+soundScoreUp : Cmd msg
+soundScoreUp =
+    playSound "ScoreUp"
+
+
+soundBigScore : Cmd msg
+soundBigScore =
+    playSound "BigScore"
+
+
+soundFire : Cmd msg
+soundFire =
+    playSound "Fire"
 
 
 touchCoordinates : Touch.Event -> ( Float, Float )
@@ -33,17 +89,17 @@ playerSrc i =
     "assets/player" ++ String.fromInt i ++ ".png"
 
 
-difficultyIncrease : Int -> Float
-difficultyIncrease score =
-    let
-        fs =
-            score |> toFloat
 
-        i =
-            sqrt (2.5 * fs)
-                ^ 1.3
-    in
-    i
+-- difficultyIncrease : Int -> Float
+-- difficultyIncrease score =
+--     let
+--         fs =
+--             score |> toFloat
+--         i =
+--             sqrt (2.5 * fs)
+--                 ^ 1.3
+--     in
+--     i
 
 
 borderColliders : List EntityBase

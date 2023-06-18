@@ -17,6 +17,29 @@
                 x: window.outerWidth,
             }
         });
+
+        app.ports.playSound.subscribe(function (message) {
+            switch (message) {
+                case "ScoreUp":
+                    let scoreUp = new Audio(`sound/ScoreUp.mp3`)
+                    scoreUp.volume = 0.4
+                    scoreUp.play()
+                    break;
+
+                case "BigScore":
+                    let bigScore = new Audio("sound/BigScore.mp3")
+                    bigScore.volume = 0.5
+                    bigScore.play()
+                    break;
+
+                case "Fire":
+                    new Audio("sound/Fire.mp3").play()
+                    break;
+
+                default:
+                    break;
+            }
+        });
     </script>
 </body>
 
