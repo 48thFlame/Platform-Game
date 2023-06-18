@@ -16,8 +16,8 @@ type alias Platform =
     EntityBase
 
 
-platformsAnimationFrame : Float -> List Platform -> List Platform
-platformsAnimationFrame delta platforms =
+platformsAnimationFrame : Float -> Float -> List Platform -> List Platform
+platformsAnimationFrame delta diffIncrease platforms =
     let
         deadsRemoved =
             if bottomPlatShouldDie platforms then
@@ -28,7 +28,7 @@ platformsAnimationFrame delta platforms =
 
         movedDown =
             List.map
-                (actAction delta (MoveUpDown platformS.speed))
+                (actAction delta (MoveUpDown (platformS.speed + diffIncrease)))
                 deadsRemoved
     in
     movedDown

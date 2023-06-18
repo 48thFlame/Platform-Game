@@ -47,6 +47,13 @@ type alias GameState =
 
 
 -- UPDATE
+-- difficultyIncrease : Int -> Float
+-- difficultyIncrease i =
+--     let
+--         x =
+--             toFloat i
+--     in
+--     sqrt (0.00001 * x)
 
 
 updateGameStateModelCall :
@@ -60,6 +67,9 @@ updateGameStateModelCall delta randTuple keys touch gs =
     let
         msgs =
             getGameMsgs keys touch (Tuple.second randTuple) delta gs
+
+        -- difficultyIncreasedDelta =
+        --     delta + difficultyIncrease gs.score |> Debug.log "delta"
     in
     ( List.foldl
         (updateGameState delta (Tuple.first randTuple))
@@ -87,8 +97,11 @@ updateGameState delta rand msg gs =
                 colliders =
                     gs.platforms ++ borderColliders
 
+                diffIncrease =
+                    difficultyIncrease gs.score
+
                 platformUpdate =
-                    platformsAnimationFrame delta gs.platforms
+                    platformsAnimationFrame delta diffIncrease gs.platforms
             in
             { gs
                 | player = playerAnimationFrame delta colliders gs.player

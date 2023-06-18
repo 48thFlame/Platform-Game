@@ -10,7 +10,7 @@ canvasS =
 
 
 plrS =
-    { gravityStrength = 970
+    { gravityStrength = 1097
     , jumpStrength = 310
     , frictionStrength = 2000
     , leftRightStrength = 144
@@ -71,6 +71,19 @@ soundBigScore =
 soundFire : Cmd msg
 soundFire =
     playSound "Fire"
+
+
+difficultyIncrease : Int -> Float
+difficultyIncrease score =
+    let
+        x =
+            score |> toFloat
+
+        y =
+            sqrt (2.5 * x)
+                ^ 1.3
+    in
+    y
 
 
 touchCoordinates : Touch.Event -> ( Float, Float )
